@@ -1,0 +1,539 @@
+{
+  "uuid": "a1111111-2222-3333-4444-555555555555",
+  "lastMigration": 33,
+  "name": "Smart Disaster API",
+  "endpointPrefix": "/api",
+  "latency": 0,
+  "port": 3001,
+  "hostname": "",
+  "folders": [],
+  "routes": [
+    {
+      "uuid": "af1e138b-989f-4e07-8808-e33f345f3a71",
+      "type": "http",
+      "method": "post",
+      "endpoint": "auth/login",
+      "responses": [
+        {
+          "uuid": "54d8bf42-1be4-4076-83d3-4e107ea4c376",
+          "statusCode": 200,
+          "body": "{ \"token\": \"mock-jwt\", \"role\": \"user\" }",
+          "bodyType": "INLINE",
+          "default": true,
+          "latency": 0,
+          "label": "",
+          "headers": [],
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "4a3d26f3-d2a8-47df-bc66-f30610273757",
+      "type": "http",
+      "method": "get",
+      "endpoint": "auth/me",
+      "responses": [
+        {
+          "uuid": "3f952891-9f62-4bf3-9477-ed40b53aa37d",
+          "statusCode": 200,
+          "body": "{ \"id\": \"usr-001\", \"name\": \"Budi\", \"role\": \"user\" }",
+          "bodyType": "INLINE",
+          "default": true,
+          "latency": 0,
+          "label": "",
+          "headers": [],
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "0e89f1d9-782f-4b4e-a69e-b0234c4c69e3",
+      "type": "http",
+      "method": "get",
+      "endpoint": "weather/current",
+      "responses": [
+        {
+          "uuid": "1cf1f7df-43a0-4a0b-a2b3-da2197051aa6",
+          "statusCode": 200,
+          "body": "{ \"temperature\": 32, \"humidity\": 78, \"smokeIndex\": 42, \"waterLevel\": 25, \"updatedAt\": \"2025-01-01T10:00:00Z\" }",
+          "bodyType": "INLINE",
+          "default": true,
+          "latency": 0,
+          "label": "",
+          "headers": [],
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "c875dc0c-2300-412d-a826-93a1a246b2c7",
+      "type": "http",
+      "method": "get",
+      "endpoint": "weather/stats",
+      "responses": [
+        {
+          "uuid": "3e721b44-5783-463d-bf86-ec789c0d3adf",
+          "statusCode": 200,
+          "body": "{ \"avgTemperature\": 31, \"avgHumidity\": 80, \"riskKebakaran\": \"tinggi\" }",
+          "bodyType": "INLINE",
+          "default": true,
+          "latency": 0,
+          "label": "",
+          "headers": [],
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "277b31ec-f479-4904-8150-3e3363287320",
+      "type": "http",
+      "method": "post",
+      "endpoint": "reports",
+      "responses": [
+        {
+          "uuid": "a21a9c8e-0623-4647-b1fe-d6e1400142b0",
+          "statusCode": 201,
+          "body": "{ \"id\": \"rep-001\", \"status\": \"baru\" }",
+          "bodyType": "INLINE",
+          "default": true,
+          "latency": 0,
+          "label": "",
+          "headers": [],
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "aadba06e-ca65-410c-864c-f305fd0cf04e",
+      "type": "http",
+      "method": "get",
+      "endpoint": "reports",
+      "responses": [
+        {
+          "uuid": "3fec5298-bbb3-4e82-852b-2a8ae10331ee",
+          "statusCode": 200,
+          "body": "{\n  \"data\": [\n    {\n      \"id\": \"rep-001\",\n      \"category\": \"banjir\",\n      \"severityScore\": 82,\n      \"priority\": 1,\n      \"status\": \"dalam_penanganan\"\n    }\n  ]\n}",
+          "bodyType": "INLINE",
+          "default": true,
+          "latency": 0,
+          "label": "",
+          "headers": [],
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "ac074e1c-a096-4741-9875-e2163fa55c38",
+      "type": "http",
+      "method": "get",
+      "endpoint": "reports/:id",
+      "responses": [
+        {
+          "uuid": "695d81b0-a9ce-4f28-b941-e60a19a1f79c",
+          "statusCode": 200,
+          "body": "{\n  \"id\": \"rep-001\",\n  \"category\": \"banjir\",\n  \"severityScore\": 82,\n  \"status\": \"dalam_penanganan\"\n}",
+          "bodyType": "INLINE",
+          "default": true,
+          "latency": 0,
+          "label": "",
+          "headers": [],
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "9b5a015b-49b1-448f-b1a7-e2772b825288",
+      "type": "http",
+      "method": "patch",
+      "endpoint": "reports/:id/status",
+      "responses": [
+        {
+          "uuid": "2fe95946-a578-4672-b71f-ffbbe9798850",
+          "statusCode": 200,
+          "body": "{ \"updated\": true }",
+          "bodyType": "INLINE",
+          "default": true,
+          "latency": 0,
+          "label": "",
+          "headers": [],
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "454c2ad7-698f-4a4b-9608-a6a885f89da2",
+      "type": "http",
+      "method": "post",
+      "endpoint": "reports/:id/assign",
+      "responses": [
+        {
+          "uuid": "e7e0f745-529f-4ebd-b986-c787e0329936",
+          "statusCode": 200,
+          "body": "{ \"assigned\": true, \"petugasId\": \"ptg-001\" }",
+          "bodyType": "INLINE",
+          "default": true,
+          "latency": 0,
+          "label": "",
+          "headers": [],
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "bde1b284-e590-466d-9c6d-7ac3ba69a75c",
+      "type": "http",
+      "method": "get",
+      "endpoint": "reports/:id/logs",
+      "responses": [
+        {
+          "uuid": "5365407c-77f2-4051-83f0-9108b6518c48",
+          "statusCode": 200,
+          "body": "{ \"data\": [ { \"message\": \"Petugas menuju lokasi\", \"createdAt\": \"2025-01-01T11:00:00Z\" } ] }",
+          "bodyType": "INLINE",
+          "default": true,
+          "latency": 0,
+          "label": "",
+          "headers": [],
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "bd12bab0-92dc-413d-8e90-f79985b9e67d",
+      "type": "http",
+      "method": "post",
+      "endpoint": "reports/:id/logs",
+      "responses": [
+        {
+          "uuid": "8aa0c317-be5c-4dba-a612-dab96c78f1d3",
+          "statusCode": 201,
+          "body": "{ \"created\": true }",
+          "bodyType": "INLINE",
+          "default": true,
+          "latency": 0,
+          "label": "",
+          "headers": [],
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "88dc7264-7386-4ec6-b2f3-5a5d1872ec94",
+      "type": "http",
+      "method": "post",
+      "endpoint": "ai/risk/banjir",
+      "responses": [
+        {
+          "uuid": "17260470-a24e-4321-b369-f5334350cc7a",
+          "statusCode": 200,
+          "body": "{ \"score\": 82, \"level\": \"tinggi\" }",
+          "bodyType": "INLINE",
+          "default": true,
+          "latency": 0,
+          "label": "",
+          "headers": [],
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "9cb5f07b-0ab3-4df8-b309-421307b82eca",
+      "type": "http",
+      "method": "post",
+      "endpoint": "ai/risk/kebakaran",
+      "responses": [
+        {
+          "uuid": "eaff584f-2096-4b61-a0e0-341b13c92a05",
+          "statusCode": 200,
+          "body": "{ \"score\": 90, \"level\": \"darurat\" }",
+          "bodyType": "INLINE",
+          "default": true,
+          "latency": 0,
+          "label": "",
+          "headers": [],
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "b87660ba-83fa-4086-92f4-6fa7ce0f4ff0",
+      "type": "http",
+      "method": "post",
+      "endpoint": "ai/risk/jalan",
+      "responses": [
+        {
+          "uuid": "2d7eacfc-d1bf-4efd-97f0-73ab2da638c8",
+          "statusCode": 200,
+          "body": "{ \"score\": 45, \"level\": \"sedang\" }",
+          "bodyType": "INLINE",
+          "default": true,
+          "latency": 0,
+          "label": "",
+          "headers": [],
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    }
+  ],
+  "rootChildren": [
+    {
+      "type": "route",
+      "uuid": "af1e138b-989f-4e07-8808-e33f345f3a71"
+    },
+    {
+      "type": "route",
+      "uuid": "4a3d26f3-d2a8-47df-bc66-f30610273757"
+    },
+    {
+      "type": "route",
+      "uuid": "0e89f1d9-782f-4b4e-a69e-b0234c4c69e3"
+    },
+    {
+      "type": "route",
+      "uuid": "c875dc0c-2300-412d-a826-93a1a246b2c7"
+    },
+    {
+      "type": "route",
+      "uuid": "277b31ec-f479-4904-8150-3e3363287320"
+    },
+    {
+      "type": "route",
+      "uuid": "aadba06e-ca65-410c-864c-f305fd0cf04e"
+    },
+    {
+      "type": "route",
+      "uuid": "ac074e1c-a096-4741-9875-e2163fa55c38"
+    },
+    {
+      "type": "route",
+      "uuid": "9b5a015b-49b1-448f-b1a7-e2772b825288"
+    },
+    {
+      "type": "route",
+      "uuid": "454c2ad7-698f-4a4b-9608-a6a885f89da2"
+    },
+    {
+      "type": "route",
+      "uuid": "bde1b284-e590-466d-9c6d-7ac3ba69a75c"
+    },
+    {
+      "type": "route",
+      "uuid": "bd12bab0-92dc-413d-8e90-f79985b9e67d"
+    },
+    {
+      "type": "route",
+      "uuid": "88dc7264-7386-4ec6-b2f3-5a5d1872ec94"
+    },
+    {
+      "type": "route",
+      "uuid": "9cb5f07b-0ab3-4df8-b309-421307b82eca"
+    },
+    {
+      "type": "route",
+      "uuid": "b87660ba-83fa-4086-92f4-6fa7ce0f4ff0"
+    }
+  ],
+  "proxyMode": false,
+  "cors": true,
+  "headers": [
+    {
+      "key": "Content-Type",
+      "value": "application/json"
+    },
+    {
+      "key": "Access-Control-Allow-Origin",
+      "value": "*"
+    },
+    {
+      "key": "Access-Control-Allow-Methods",
+      "value": "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+    },
+    {
+      "key": "Access-Control-Allow-Headers",
+      "value": "Content-Type, Authorization"
+    }
+  ],
+  "data": [],
+  "callbacks": [],
+  "proxyHost": "",
+  "proxyRemovePrefix": false,
+  "tlsOptions": {
+    "enabled": false,
+    "type": "CERT",
+    "pfxPath": "",
+    "certPath": "",
+    "keyPath": "",
+    "caPath": "",
+    "passphrase": ""
+  },
+  "proxyReqHeaders": [],
+  "proxyResHeaders": []
+}
