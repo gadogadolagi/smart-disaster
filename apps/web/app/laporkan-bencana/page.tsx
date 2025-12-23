@@ -1,9 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 
-import { MainLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -20,17 +19,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/lib/api/config';
-import type { RoadIssueType } from '@/types';
-import { Construction, Upload, Brain, X } from 'lucide-react';
+import type { DisasterType } from '@/types';
+import { AlertTriangle, Upload, X } from 'lucide-react';
 
-export default function ReportRoad() {
+export default function LaporkanBencana() {
   const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    type: '' as RoadIssueType,
+    type: '' as DisasterType,
     title: '',
     description: '',
     address: '',
@@ -57,6 +56,25 @@ export default function ReportRoad() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    // Validate required fields
+    if (!formData.type) {
+      toast({
+        title: 'Validasi Error',
+        description: 'Silakan pilih jenis bencana',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!formData.title || !formData.description || !formData.address || !formData.district) {
+      toast({
+        title: 'Validasi Error',
+        description: 'Silakan lengkapi semua field yang wajib diisi',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setIsLoading(true);
 
@@ -89,7 +107,7 @@ export default function ReportRoad() {
         formDataToSend.append('images', file);
       });
 
-      const response = await fetch(API_ENDPOINTS.reports.road.create, {
+      const response = await fetch(API_ENDPOINTS.reports.disaster.create, {
         method: 'POST',
         body: formDataToSend,
       });
@@ -103,7 +121,7 @@ export default function ReportRoad() {
 
       toast({
         title: 'Laporan terkirim!',
-        description: 'Laporan jalan rusak Anda telah dikirim dan akan dianalisis.',
+        description: 'Tim kami akan segera memverifikasi laporan Anda.',
       });
 
       router.push('/public-reports');
@@ -111,7 +129,8 @@ export default function ReportRoad() {
       console.error('Error submitting report:', error);
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Gagal mengirim laporan. Silakan coba lagi.',
+        description:
+          error instanceof Error ? error.message : 'Gagal mengirim laporan. Silakan coba lagi.',
         variant: 'destructive',
       });
     } finally {
@@ -120,73 +139,70 @@ export default function ReportRoad() {
   };
 
   return (
-    <MainLayout>
+    <>
       <div className="container py-8 max-w-2xl">
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center">
-                <Construction className="h-6 w-6 text-success" />
+              <div className="w-12 h-12 rounded-lg bg-warning/10 flex items-center justify-center">
+                <AlertTriangle className="h-6 w-6 text-warning" />
               </div>
               <div>
-                <CardTitle>Lapor Jalan Rusak</CardTitle>
+                <CardTitle>Laporkan Bencana</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Dengan klasifikasi AI untuk prioritas perbaikan
+                  Isi form untuk melaporkan kejadian bencana
                 </p>
               </div>
             </div>
           </CardHeader>
+
           <CardContent>
-            <div className="mb-6 p-4 bg-info/10 rounded-lg flex items-center gap-3">
-              <Brain className="h-5 w-5 text-info" />
-              <p className="text-sm">
-                Foto akan dianalisis menggunakan Deep Learning untuk klasifikasi tingkat bahaya
-              </p>
-            </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label>Jenis Kerusakan</Label>
+                <Label>Jenis Bencana *</Label>
                 <Select
                   value={formData.type}
-                  onValueChange={(v) => setFormData({ ...formData, type: v as RoadIssueType })}
+                  onValueChange={(v) => setFormData({ ...formData, type: v as DisasterType })}
+                  required
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Pilih jenis kerusakan" />
+                    <SelectValue placeholder="Pilih jenis bencana" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pothole">Jalan Berlubang</SelectItem>
-                    <SelectItem value="landslide">Jalan Longsor</SelectItem>
-                    <SelectItem value="bridge_damage">Jembatan Rusak</SelectItem>
-                    <SelectItem value="crack">Retakan Jalan</SelectItem>
-                    <SelectItem value="flooding">Jalan Tergenang</SelectItem>
+                    <SelectItem value="flood">Banjir</SelectItem>
+                    <SelectItem value="fire">Kebakaran</SelectItem>
+                    <SelectItem value="fallen_tree">Pohon Tumbang</SelectItem>
+                    <SelectItem value="landslide">Longsor</SelectItem>
+                    <SelectItem value="earthquake">Gempa Bumi</SelectItem>
+                    <SelectItem value="other">Lainnya</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label>Judul Laporan</Label>
+                <Label>Judul Laporan *</Label>
                 <Input
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="Contoh: Jalan Berlubang di Jalan Raya"
+                  placeholder="Contoh: Banjir di Jalan Raya Menteng"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label>Deskripsi</Label>
+                <Label>Deskripsi *</Label>
                 <Textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Jelaskan kondisi kerusakan jalan..."
-                  rows={3}
+                  placeholder="Jelaskan kondisi di lokasi..."
+                  rows={4}
                   required
                 />
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Alamat</Label>
+                  <Label>Alamat Lokasi *</Label>
                   <Input
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
@@ -194,8 +210,9 @@ export default function ReportRoad() {
                     required
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label>Kecamatan</Label>
+                  <Label>Kecamatan/Kelurahan *</Label>
                   <Input
                     value={formData.district}
                     onChange={(e) => setFormData({ ...formData, district: e.target.value })}
@@ -228,7 +245,7 @@ export default function ReportRoad() {
               )}
 
               <div className="space-y-2">
-                <Label>Foto Kerusakan (Opsional, maks 5 file)</Label>
+                <Label>Foto Lokasi (Opsional, maks 5 file)</Label>
                 <div className="border-2 border-dashed rounded-lg p-6">
                   <input
                     type="file"
@@ -284,12 +301,12 @@ export default function ReportRoad() {
               </div>
 
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Menganalisis...' : 'Kirim & Analisis'}
+                {isLoading ? 'Mengirim...' : 'Kirim Laporan'}
               </Button>
             </form>
           </CardContent>
         </Card>
       </div>
-    </MainLayout>
+    </>
   );
 }

@@ -1,8 +1,9 @@
+import { MainLayout } from '@/components/layout';
+import { Toaster } from '@/components/ui/sonner';
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
-import Providers from './providers';
-
 import './globals.css';
+import Providers from './providers';
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -16,7 +17,7 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: 'UHTP Smart-Disaster',
   description: 'generate by team gado gado',
-  icons: '.././uhtpsmartdisaster.jpeg',
+  icons: '././uhtpsmartdisaster.jpeg',
 };
 
 export default function RootLayout({
@@ -27,8 +28,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <Providers>{children}</Providers>
-        <div className="text-red-500">lorem</div>
+        <Providers>
+          <MainLayout>{children}</MainLayout>
+          <Toaster />
+        </Providers>
       </body>
     </html>
   );

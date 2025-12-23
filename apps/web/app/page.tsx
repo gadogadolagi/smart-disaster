@@ -1,6 +1,5 @@
 'use client';
 
-import { MainLayout } from '@/components/layout';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -53,7 +52,7 @@ const features = [
     icon: AlertTriangle,
     title: 'Laporkan Bencana',
     description: 'Laporkan kejadian bencana alam secara cepat dengan foto dan lokasi GPS',
-    href: '/report-disaster',
+    href: '/laporkan-bencana',
     color: 'text-emergency-warning',
     bgColor: 'bg-emergency-warning/10',
   },
@@ -61,7 +60,7 @@ const features = [
     icon: Construction,
     title: 'Lapor Jalan Rusak',
     description: 'Laporkan kondisi jalan berlubang, longsor, atau kerusakan infrastruktur',
-    href: '/report-road',
+    href: '/laporkan-jalan',
     color: 'text-primary',
     bgColor: 'bg-primary/10',
   },
@@ -76,6 +75,7 @@ const disasterTypes = [
 
 export default function Home() {
   const { isAuthenticated, isGovernment } = useAuth();
+
   const recentReports = getDisasterReports().slice(0, 3);
   const criticalAreas = mockFirePredictions.filter(
     (p) => p.riskLevel === 'critical' || p.riskLevel === 'high'
@@ -85,7 +85,7 @@ export default function Home() {
   );
 
   return (
-    <MainLayout>
+    <>
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-linear-to-br from-primary/5 via-background to-emergency-flood/5">
         <div className="absolute inset-0 bg-grid-pattern opacity-5" />
@@ -118,13 +118,13 @@ export default function Home() {
               <div className="flex flex-wrap gap-4">
                 {isAuthenticated && !isGovernment ? (
                   <>
-                    <Link href="/report-disaster">
+                    <Link href="/laporkan-bencana">
                       <Button size="lg" className="gap-2 shadow-lg shadow-primary/25">
                         <AlertTriangle className="w-5 h-5" />
                         Laporkan Bencana
                       </Button>
                     </Link>
-                    <Link href="/my-reports">
+                    <Link href="/laporan-saya">
                       <Button size="lg" variant="outline" className="gap-2">
                         <FileText className="w-5 h-5" />
                         Lihat Laporan Saya
@@ -132,7 +132,7 @@ export default function Home() {
                     </Link>
                   </>
                 ) : isGovernment ? (
-                  <Link href="/admin">
+                  <Link href="/dashboardadmin">
                     <Button size="lg" className="gap-2 shadow-lg shadow-primary/25">
                       <Shield className="w-5 h-5" />
                       Buka Dashboard Admin
@@ -276,109 +276,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Alert Areas Section */}
-      <section className="py-20">
-        <div className="container">
-          <div className="grid lg:grid-cols-2 gap-8">
-            {/* Fire Risk Areas */}
-            <Card className="overflow-hidden border-emergency-fire/20">
-              <div className="bg-linear-to-r from-emergency-fire/10 to-emergency-fire/5 p-6 border-b border-emergency-fire/20">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-xl bg-emergency-fire/20">
-                      <Flame className="w-6 h-6 text-emergency-fire" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-lg">Area Rawan Kebakaran</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {criticalAreas.length} area dalam pengawasan
-                      </p>
-                    </div>
-                  </div>
-                  <Link href="/fire-prediction">
-                    <Button variant="outline" size="sm" className="gap-1">
-                      Lihat Semua <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  {criticalAreas.slice(0, 3).map((area, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-4 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                    >
-                      <div
-                        className={`w-3 h-3 rounded-full ${area.riskLevel === 'critical' ? 'bg-emergency-fire animate-pulse' : 'bg-emergency-warning'}`}
-                      />
-                      <div className="flex-1">
-                        <p className="font-medium">{area.area}</p>
-                        <p className="text-sm text-muted-foreground flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          {area.district}
-                        </p>
-                      </div>
-                      <Badge variant={area.riskLevel === 'critical' ? 'destructive' : 'secondary'}>
-                        {area.riskLevel === 'critical' ? 'Kritis' : 'Tinggi'}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Flood Risk Areas */}
-            <Card className="overflow-hidden border-emergency-flood/20">
-              <div className="bg-linear-to-r from-emergency-flood/10 to-emergency-flood/5 p-6 border-b border-emergency-flood/20">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-xl bg-emergency-flood/20">
-                      <Droplets className="w-6 h-6 text-emergency-flood" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-lg">Area Rawan Banjir</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {highRiskFloods.length} area berisiko tinggi
-                      </p>
-                    </div>
-                  </div>
-                  <Link href="/flood-risk">
-                    <Button variant="outline" size="sm" className="gap-1">
-                      Lihat Semua <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  {highRiskFloods.slice(0, 3).map((area, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-4 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                    >
-                      <div
-                        className={`w-3 h-3 rounded-full ${area.riskLevel === 'critical' ? 'bg-emergency-flood animate-pulse' : 'bg-emergency-warning'}`}
-                      />
-                      <div className="flex-1">
-                        <p className="font-medium">{area.area}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Curah hujan: {area.factors.rainfall}mm • Ketinggian:{' '}
-                          {area.factors.elevation}m
-                        </p>
-                      </div>
-                      <Badge variant={area.riskLevel === 'critical' ? 'destructive' : 'secondary'}>
-                        {area.riskLevel === 'critical' ? 'Kritis' : 'Tinggi'}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
       {/* Recent Reports Section */}
       <section className="py-20 bg-muted/30">
         <div className="container">
@@ -387,13 +284,14 @@ export default function Home() {
               <h2 className="text-3xl font-bold mb-2">Laporan Terbaru</h2>
               <p className="text-muted-foreground">Laporan bencana terkini dari masyarakat</p>
             </div>
-            {isAuthenticated && (
-              <Link href="/my-reports">
+
+            {isAuthenticated && !isGovernment ? (
+              <Link href="/laporan-saya">
                 <Button variant="outline" className="gap-2">
                   Lihat Semua <ArrowRight className="w-4 h-4" />
                 </Button>
               </Link>
-            )}
+            ) : null}
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
@@ -401,16 +299,12 @@ export default function Home() {
               <Card key={report.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                 {report.images?.[0] && (
                   <div className="h-48 bg-muted relative overflow-hidden">
+                    {/* ideal: pakai next/image nanti */}
                     <img
                       src={report.images[0]}
                       alt={report.title}
                       className="w-full h-full object-cover"
                     />
-                    {/* <Image
-                      src=".././public/gambar1.jpg"
-                      alt={report.title}
-                      className="w-full h-full object-cover"
-                    /> */}
                     <div className="absolute top-3 right-3">
                       <Badge
                         variant={
@@ -430,6 +324,7 @@ export default function Home() {
                     </div>
                   </div>
                 )}
+
                 <CardContent className="p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <Badge variant="outline" className="text-xs">
@@ -442,10 +337,12 @@ export default function Home() {
                             : 'Lainnya'}
                     </Badge>
                   </div>
+
                   <h3 className="font-semibold mb-2 line-clamp-1">{report.title}</h3>
                   <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
                     {report.description}
                   </p>
+
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <MapPin className="w-4 h-4" />
                     <span className="line-clamp-1">{report.location.address}</span>
@@ -490,6 +387,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-    </MainLayout>
+    </>
   );
 }
