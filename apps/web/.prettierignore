@@ -1,0 +1,10 @@
+node_modules
+.next
+.vercel
+.turbo
+pnpm-lock.yaml
+.idea
+.vscode
+coverage
+*.log
+apps/web/public
