@@ -1,4 +1,3 @@
-'use client';
 import { MainLayout } from '@/components/layout';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -29,7 +28,7 @@ import {
   Users,
   Zap,
 } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 
 const features = [
   {
@@ -73,7 +72,7 @@ const disasterTypes = [
   { icon: AlertTriangle, label: 'Pohon Tumbang', count: 15, color: 'text-orange-500' },
 ];
 
-export default function Home() {
+export default function Index() {
   const { isAuthenticated, isGovernment } = useAuth();
   const recentReports = getDisasterReports().slice(0, 3);
   const criticalAreas = mockFirePredictions.filter(
@@ -117,13 +116,13 @@ export default function Home() {
               <div className="flex flex-wrap gap-4">
                 {isAuthenticated && !isGovernment ? (
                   <>
-                    <Link href="/report-disaster">
+                    <Link to="/report-disaster">
                       <Button size="lg" className="gap-2 shadow-lg shadow-primary/25">
                         <AlertTriangle className="w-5 h-5" />
                         Laporkan Bencana
                       </Button>
                     </Link>
-                    <Link href="/my-reports">
+                    <Link to="/my-reports">
                       <Button size="lg" variant="outline" className="gap-2">
                         <FileText className="w-5 h-5" />
                         Lihat Laporan Saya
@@ -131,7 +130,7 @@ export default function Home() {
                     </Link>
                   </>
                 ) : isGovernment ? (
-                  <Link href="/admin">
+                  <Link to="/admin">
                     <Button size="lg" className="gap-2 shadow-lg shadow-primary/25">
                       <Shield className="w-5 h-5" />
                       Buka Dashboard Admin
@@ -139,13 +138,13 @@ export default function Home() {
                   </Link>
                 ) : (
                   <>
-                    <Link href="/register">
+                    <Link to="/register">
                       <Button size="lg" className="gap-2 shadow-lg shadow-primary/25">
                         <Users className="w-5 h-5" />
                         Daftar Sekarang
                       </Button>
                     </Link>
-                    <Link href="/login">
+                    <Link to="/login">
                       <Button size="lg" variant="outline" className="gap-2">
                         Masuk
                         <ArrowRight className="w-5 h-5" />
@@ -251,7 +250,7 @@ export default function Home() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature, i) => (
-              <Link key={i} href={feature.href}>
+              <Link key={i} to={feature.href}>
                 <Card className="h-full group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-transparent hover:border-primary/20">
                   <CardContent className="p-6">
                     <div
@@ -294,7 +293,7 @@ export default function Home() {
                       </p>
                     </div>
                   </div>
-                  <Link href="/fire-prediction">
+                  <Link to="/fire-prediction">
                     <Button variant="outline" size="sm" className="gap-1">
                       Lihat Semua <ArrowRight className="w-4 h-4" />
                     </Button>
@@ -342,7 +341,7 @@ export default function Home() {
                       </p>
                     </div>
                   </div>
-                  <Link href="/flood-risk">
+                  <Link to="/flood-risk">
                     <Button variant="outline" size="sm" className="gap-1">
                       Lihat Semua <ArrowRight className="w-4 h-4" />
                     </Button>
@@ -387,7 +386,7 @@ export default function Home() {
               <p className="text-muted-foreground">Laporan bencana terkini dari masyarakat</p>
             </div>
             {isAuthenticated && (
-              <Link href="/my-reports">
+              <Link to="/my-reports">
                 <Button variant="outline" className="gap-2">
                   Lihat Semua <ArrowRight className="w-4 h-4" />
                 </Button>
