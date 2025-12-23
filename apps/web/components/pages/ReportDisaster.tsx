@@ -117,7 +117,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 
 import { MainLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
@@ -140,7 +140,7 @@ import type { DisasterType } from '@/types';
 import { AlertTriangle, Upload, X } from 'lucide-react';
 
 export default function ReportDisaster() {
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -153,16 +153,10 @@ export default function ReportDisaster() {
     district: '',
     lat: '-6.2088',
     lng: '106.8226',
+    reporterName: '',
+    reporterPhone: '',
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-
-  // ✅ redirect pakai useEffect (side-effect)
-  useEffect(() => {
-    if (!isAuthenticated) router.replace('/login');
-  }, [isAuthenticated, router]);
-
-  // (opsional) biar nggak sempat render form saat redirect
-  if (!isAuthenticated) return null;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -179,7 +173,25 @@ export default function ReportDisaster() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+
+    // Validate required fields
+    if (!formData.type) {
+      toast({
+        title: 'Validasi Error',
+        description: 'Silakan pilih jenis bencana',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!formData.title || !formData.description || !formData.address || !formData.district) {
+      toast({
+        title: 'Validasi Error',
+        description: 'Silakan lengkapi semua field yang wajib diisi',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setIsLoading(true);
 
@@ -195,12 +207,15 @@ export default function ReportDisaster() {
       formDataToSend.append('lng', formData.lng);
 
       // Add user info (optional, bisa juga anonymous)
-      if (user.id) {
-        // formDataToSend.append('reportedById', user.id);
+      if (user?.id) {
+        formDataToSend.append('reportedById', user.id);
       } else {
-        formDataToSend.append('reporterName', user.name);
-        if (user.phone) {
-          formDataToSend.append('reporterPhone', user.phone);
+        // Use form data or anonymous
+        const reporterName = formData.reporterName || 'Anonim';
+        const reporterPhone = formData.reporterPhone || '';
+        formDataToSend.append('reporterName', reporterName);
+        if (reporterPhone) {
+          formDataToSend.append('reporterPhone', reporterPhone);
         }
       }
 
@@ -261,10 +276,11 @@ export default function ReportDisaster() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label>Jenis Bencana</Label>
+                <Label>Jenis Bencana *</Label>
                 <Select
                   value={formData.type}
                   onValueChange={(v) => setFormData({ ...formData, type: v as DisasterType })}
+                  required
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih jenis bencana" />
@@ -281,7 +297,7 @@ export default function ReportDisaster() {
               </div>
 
               <div className="space-y-2">
-                <Label>Judul Laporan</Label>
+                <Label>Judul Laporan *</Label>
                 <Input
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
@@ -291,7 +307,7 @@ export default function ReportDisaster() {
               </div>
 
               <div className="space-y-2">
-                <Label>Deskripsi</Label>
+                <Label>Deskripsi *</Label>
                 <Textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -303,7 +319,7 @@ export default function ReportDisaster() {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Alamat Lokasi</Label>
+                  <Label>Alamat Lokasi *</Label>
                   <Input
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
@@ -313,7 +329,7 @@ export default function ReportDisaster() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Kecamatan/Kelurahan</Label>
+                  <Label>Kecamatan/Kelurahan *</Label>
                   <Input
                     value={formData.district}
                     onChange={(e) => setFormData({ ...formData, district: e.target.value })}
@@ -322,6 +338,28 @@ export default function ReportDisaster() {
                   />
                 </div>
               </div>
+
+              {!user && (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Nama Pelapor (Opsional)</Label>
+                    <Input
+                      value={formData.reporterName}
+                      onChange={(e) => setFormData({ ...formData, reporterName: e.target.value })}
+                      placeholder="Nama Anda"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Nomor Telepon (Opsional)</Label>
+                    <Input
+                      value={formData.reporterPhone}
+                      onChange={(e) => setFormData({ ...formData, reporterPhone: e.target.value })}
+                      placeholder="081234567890"
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label>Foto Lokasi (Opsional, maks 5 file)</Label>

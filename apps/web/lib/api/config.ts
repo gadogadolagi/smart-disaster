@@ -10,6 +10,13 @@ export const API_ENDPOINTS = {
       update: (id: string) => `${API_BASE_URL}/api/reports/disaster/${id}`,
       delete: (id: string) => `${API_BASE_URL}/api/reports/disaster/${id}`,
     },
+    road: {
+      list: `${API_BASE_URL}/api/reports/road`,
+      create: `${API_BASE_URL}/api/reports/road`,
+      get: (id: string) => `${API_BASE_URL}/api/reports/road/${id}`,
+      update: (id: string) => `${API_BASE_URL}/api/reports/road/${id}`,
+      delete: (id: string) => `${API_BASE_URL}/api/reports/road/${id}`,
+    },
   },
 };
 

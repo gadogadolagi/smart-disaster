@@ -37,6 +37,23 @@ const disasterReportSchema = z.object({
   reporterPhone: z.string().optional(),
 });
 
+// Validation schema for form data (with file upload)
+const roadReportFormSchema = z.object({
+  type: z.enum(['pothole', 'landslide', 'bridge_damage', 'crack', 'flooding']),
+  title: z.string().min(1, 'Judul laporan harus diisi'),
+  description: z.string().min(1, 'Deskripsi harus diisi'),
+  address: z.string().min(1, 'Alamat harus diisi'),
+  lat: z.string().transform((val) => parseFloat(val)),
+  lng: z.string().transform((val) => parseFloat(val)),
+  district: z.string().min(1, 'Kecamatan harus diisi'),
+  // Optional fields for anonymous reports
+  reportedById: z.string().optional(),
+  reporterName: z.string().optional(),
+  reporterPhone: z.string().optional(),
+  dangerLevel: z.enum(['minor', 'moderate', 'severe']).optional().default('moderate'),
+});
+
+// Validation schema for JSON API (backward compatibility)
 const roadReportSchema = z.object({
   type: z.enum(['pothole', 'landslide', 'bridge_damage', 'crack', 'flooding']),
   title: z.string().min(1),
@@ -47,7 +64,9 @@ const roadReportSchema = z.object({
   district: z.string().min(1),
   images: z.array(z.string()).optional().default([]),
   dangerLevel: z.enum(['minor', 'moderate', 'severe']).optional().default('moderate'),
-  reportedById: z.string().min(1),
+  reportedById: z.string().optional(),
+  reporterName: z.string().optional(),
+  reporterPhone: z.string().optional(),
   aiDetectedIssues: z.array(z.string()).optional().default([]),
   aiConfidence: z.number().optional(),
   aiRecommendedAction: z.string().optional(),
@@ -453,20 +472,77 @@ reportsRouter.get('/road/:id', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/reports/road - Create road report
-reportsRouter.post('/road', async (req: Request, res: Response) => {
+// POST /api/reports/road - Create road report (with file upload support)
+reportsRouter.post('/road', (req: Request, res: Response, next: express.NextFunction) => {
+  // Multer middleware with error handling
+  upload.array('images', 5)(req, res, (err: any) => {
+    if (err) {
+      // Handle multer errors
+      if (err instanceof Error) {
+        if (err.message.includes('Invalid file type')) {
+          return res.status(400).json({
+            error: 'File upload error',
+            message: 'Jenis file tidak valid. Hanya gambar (JPEG, PNG, WebP, GIF) yang diperbolehkan.',
+          });
+        }
+        if (err.message.includes('File too large') || err.message.includes('LIMIT_FILE_SIZE')) {
+          return res.status(400).json({
+            error: 'File upload error',
+            message: 'Ukuran file terlalu besar. Maksimal 5MB per file.',
+          });
+        }
+        if (err.message.includes('LIMIT_FILE_COUNT')) {
+          return res.status(400).json({
+            error: 'File upload error',
+            message: 'Terlalu banyak file. Maksimal 5 file per request.',
+          });
+        }
+      }
+      return res.status(400).json({
+        error: 'File upload error',
+        message: err.message || 'Terjadi kesalahan saat mengupload file.',
+      });
+    }
+    next();
+  });
+}, async (req: Request, res: Response) => {
   try {
-    const validatedData = roadReportSchema.parse(req.body);
-
-    // Check if user exists
-    const user = await prisma.user.findUnique({
-      where: { id: validatedData.reportedById },
-    });
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+    // Handle file uploads
+    const files = (req as any).files as Express.Multer.File[] || [];
+    const imagePaths: string[] = [];
+    
+    if (files && files.length > 0) {
+      files.forEach((file) => {
+        // Store relative path from uploads folder
+        const imagePath = `/uploads/${file.filename}`;
+        imagePaths.push(imagePath);
+        console.log(`File saved: ${file.filename} at ${file.path}`);
+      });
     }
 
+    console.log(`Received ${files.length} file(s) for upload`);
+
+    // Parse and validate form data
+    const formData = {
+      ...req.body,
+      lat: req.body.lat,
+      lng: req.body.lng,
+    };
+
+    const validatedData = roadReportFormSchema.parse(formData);
+
+    // If reportedById is provided, verify user exists
+    if (validatedData.reportedById) {
+      const user = await prisma.user.findUnique({
+        where: { id: validatedData.reportedById },
+      });
+
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+    }
+
+    // Create report
     const report = await prisma.roadReport.create({
       data: {
         type: validatedData.type,
@@ -476,14 +552,37 @@ reportsRouter.post('/road', async (req: Request, res: Response) => {
         lat: validatedData.lat,
         lng: validatedData.lng,
         district: validatedData.district,
-        images: validatedData.images || [],
+        images: imagePaths,
         dangerLevel: validatedData.dangerLevel || 'moderate',
-        reportedById: validatedData.reportedById,
-        aiDetectedIssues: validatedData.aiDetectedIssues || [],
-        aiConfidence: validatedData.aiConfidence,
-        aiRecommendedAction: validatedData.aiRecommendedAction,
+        // User relation (if provided)
+        reportedById: validatedData.reportedById || null,
+        // Anonymous reporter info (if no user)
+        reporterName: validatedData.reportedById ? null : (validatedData.reporterName || null),
+        reporterPhone: validatedData.reportedById ? null : (validatedData.reporterPhone || null),
+        // AI Analysis fields (can be added later)
+        aiDetectedIssues: [],
+        aiConfidence: null,
+        aiRecommendedAction: null,
       },
-      include: {
+      select: {
+        id: true,
+        type: true,
+        title: true,
+        description: true,
+        address: true,
+        lat: true,
+        lng: true,
+        district: true,
+        images: true,
+        status: true,
+        dangerLevel: true,
+        reporterName: true,
+        reporterPhone: true,
+        aiDetectedIssues: true,
+        aiConfidence: true,
+        aiRecommendedAction: true,
+        createdAt: true,
+        updatedAt: true,
         reportedBy: {
           select: {
             id: true,
@@ -494,10 +593,38 @@ reportsRouter.post('/road', async (req: Request, res: Response) => {
       },
     });
 
-    res.status(201).json({ data: report });
+    console.log(`Road report created successfully with ID: ${report.id}, Images: ${imagePaths.length}`);
+    
+    res.status(201).json({ 
+      data: report,
+      message: 'Laporan berhasil dikirim',
+      uploadedImages: imagePaths.length,
+    });
   } catch (error) {
+    // If error occurs after files are uploaded, we should clean them up
+    const files = (req as any).files as Express.Multer.File[] || [];
+    if (files && files.length > 0) {
+      const fs = require('fs');
+      files.forEach((file) => {
+        try {
+          if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+            console.log(`Cleaned up file: ${file.filename}`);
+          }
+        } catch (cleanupError) {
+          console.error(`Failed to cleanup file ${file.filename}:`, cleanupError);
+        }
+      });
+    }
+    
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation error', details: error.errors });
+      return res.status(400).json({ 
+        error: 'Validation error', 
+        details: error.errors.map(e => ({
+          field: e.path.join('.'),
+          message: e.message
+        }))
+      });
     }
     console.error('Error creating road report:', error);
     res.status(500).json({ error: 'Failed to create road report' });

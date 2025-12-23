@@ -35,6 +35,9 @@ const publicNavItems = [
 const citizenNavItems = [
   { href: '/report-disaster', label: 'Laporkan Bencana', icon: AlertTriangle },
   { href: '/report-road', label: 'Lapor Jalan Rusak', icon: FileText },
+];
+
+const authenticatedNavItems = [
   { href: '/my-reports', label: 'Laporan Saya', icon: FileText },
 ];
 
@@ -53,7 +56,8 @@ export function Navbar() {
   const navItems = useMemo(
     () => [
       ...publicNavItems,
-      ...(isAuthenticated && !isGovernment ? citizenNavItems : []),
+      ...citizenNavItems, // Always show report links (no login required)
+      ...(isAuthenticated && !isGovernment ? authenticatedNavItems : []),
       ...(isGovernment ? governmentNavItems : []),
     ],
     [isAuthenticated, isGovernment]

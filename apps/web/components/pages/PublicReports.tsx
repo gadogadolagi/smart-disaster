@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
-import { getComments, getRoadReports, saveComment } from '@/data/mockData';
+import { getComments, saveComment } from '@/data/mockData';
 import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS, getImageUrl } from '@/lib/api/config';
 import { DisasterReport, ReportComment, RoadReport } from '@/types';
@@ -178,7 +178,7 @@ function DisasterReportCard({ report }: { report: DisasterReport }) {
             {report.images && report.images.length > 0 && (
               <div className="mb-3 rounded-lg overflow-hidden">
                 <img
-                  src={getImageUrl(report.images[0])}
+                  src={getImageUrl(report.images?.[0] || '')}
                   alt={report.title}
                   className="w-full h-32 object-cover"
                 />
@@ -377,27 +377,27 @@ function RoadReportCard({ report }: { report: RoadReport }) {
 
 export default function PublicReports() {
   const [disasterReports, setDisasterReports] = useState<DisasterReport[]>([]);
-  const [roadReports] = useState<RoadReport[]>(() => getRoadReports());
+  const [roadReports, setRoadReports] = useState<RoadReport[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  // Fetch disaster reports from API
+  // Fetch reports from API
   useEffect(() => {
-    const fetchDisasterReports = async () => {
+    const fetchReports = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(API_ENDPOINTS.reports.disaster.list);
-        
-        if (!response.ok) {
+
+        // Fetch disaster reports
+        const disasterResponse = await fetch(API_ENDPOINTS.reports.disaster.list);
+        if (!disasterResponse.ok) {
           throw new Error('Failed to fetch disaster reports');
         }
+        const disasterResult = await disasterResponse.json();
 
-        const result = await response.json();
-        
-        // Transform API response to match frontend type
-        const reports: DisasterReport[] = result.data.map((report: any) => ({
+        // Transform disaster reports
+        const disasterData: DisasterReport[] = disasterResult.data.map((report: any) => ({
           id: report.id,
           type: report.type,
           title: report.title,
@@ -428,22 +428,69 @@ export default function PublicReports() {
           notes: report.notes,
         }));
 
-        setDisasterReports(reports);
+        // Fetch road reports
+        const roadResponse = await fetch(API_ENDPOINTS.reports.road.list);
+        if (!roadResponse.ok) {
+          throw new Error('Failed to fetch road reports');
+        }
+        const roadResult = await roadResponse.json();
+
+        // Transform road reports
+        const roadData: RoadReport[] = roadResult.data.map((report: any) => ({
+          id: report.id,
+          type: report.type,
+          title: report.title,
+          description: report.description,
+          location: {
+            address: report.address,
+            lat: report.lat,
+            lng: report.lng,
+            district: report.district,
+          },
+          images: report.images || [],
+          status: report.status,
+          dangerLevel: report.dangerLevel,
+          aiAnalysis:
+            report.aiDetectedIssues && report.aiDetectedIssues.length > 0
+              ? {
+                  detectedIssues: report.aiDetectedIssues,
+                  confidence: report.aiConfidence || 0.85,
+                  recommendedAction: report.aiRecommendedAction || 'Perlu analisis lebih lanjut',
+                }
+              : undefined,
+          reportedBy: report.reportedBy
+            ? {
+                id: report.reportedBy.id,
+                name: report.reportedBy.name,
+                phone: report.reportedBy.phone,
+              }
+            : {
+                id: 'anonymous',
+                name: report.reporterName || 'Anonim',
+                phone: report.reporterPhone,
+              },
+          createdAt: report.createdAt,
+          updatedAt: report.updatedAt,
+        }));
+
+        setDisasterReports(disasterData);
+        setRoadReports(roadData);
       } catch (error) {
-        console.error('Error fetching disaster reports:', error);
+        console.error('Error fetching reports:', error);
         toast({
           title: 'Error',
-          description: 'Gagal memuat laporan bencana. Silakan refresh halaman.',
+          description: 'Gagal memuat laporan. Silakan refresh halaman.',
           variant: 'destructive',
         });
-        // Fallback to empty array
+        // Fallback to empty arrays
         setDisasterReports([]);
+        setRoadReports([]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchDisasterReports();
+    fetchReports();
   }, [toast]);
 
   const filterReports = <T extends DisasterReport | RoadReport>(reports: T[]): T[] => {
@@ -546,7 +593,7 @@ export default function PublicReports() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {filteredDisasterReports.map((report) => (
                   <DisasterReportCard key={report.id} report={report} />
                 ))}
