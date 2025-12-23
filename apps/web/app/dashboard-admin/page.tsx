@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
   DangerLevelBadge,
@@ -32,7 +32,6 @@ import {
   updateRoadReport, // ✅ buat helper ini di mockData.ts (lihat catatan di bawah)
 } from '@/data/mockData';
 
-import { useToast } from '@/hooks/use-toast';
 import { DisasterType, ReportStatus, RoadReport } from '@/types';
 
 import {
@@ -49,11 +48,11 @@ import {
   TreePine,
   User,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function DashboardAdmin() {
   const { isGovernment } = useAuth();
   const router = useRouter();
-  const { toast } = useToast();
 
   const [mounted, setMounted] = useState(false);
 
@@ -98,19 +97,13 @@ export default function DashboardAdmin() {
   const handleDisasterStatusChange = (id: string, status: ReportStatus) => {
     updateDisasterReport(id, { status });
     setDisasterReports(getDisasterReports());
-    toast({
-      title: 'Status diperbarui',
-      description: `Laporan bencana telah diubah ke ${status}`,
-    });
+    toast.success('Status diperbarui');
   };
 
   const handleRoadStatusChange = (id: string, status: ReportStatus) => {
     updateRoadReport(id, { status }); // ✅ helper
     setRoadReports(getRoadReports());
-    toast({
-      title: 'Status diperbarui',
-      description: `Laporan jalan telah diubah ke ${status}`,
-    });
+    toast.success('Status diperbarui');
   };
 
   const disasterCounts = useMemo(

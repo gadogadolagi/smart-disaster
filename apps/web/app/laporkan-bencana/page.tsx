@@ -17,15 +17,14 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/lib/api/config';
 import type { DisasterType } from '@/types';
 import { AlertTriangle, Upload, X } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function LaporkanBencana() {
   const { user } = useAuth();
   const router = useRouter();
-  const { toast } = useToast();
 
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -59,20 +58,12 @@ export default function LaporkanBencana() {
 
     // Validate required fields
     if (!formData.type) {
-      toast({
-        title: 'Validasi Error',
-        description: 'Silakan pilih jenis bencana',
-        variant: 'destructive',
-      });
+      toast.error('Validasi Error');
       return;
     }
 
     if (!formData.title || !formData.description || !formData.address || !formData.district) {
-      toast({
-        title: 'Validasi Error',
-        description: 'Silakan lengkapi semua field yang wajib diisi',
-        variant: 'destructive',
-      });
+      toast.error('Validasi Error');
       return;
     }
 
@@ -119,20 +110,12 @@ export default function LaporkanBencana() {
 
       const result = await response.json();
 
-      toast({
-        title: 'Laporan terkirim!',
-        description: 'Tim kami akan segera memverifikasi laporan Anda.',
-      });
+      toast.error('Validasi Error');
 
       router.push('/public-reports');
     } catch (error) {
       console.error('Error submitting report:', error);
-      toast({
-        title: 'Error',
-        description:
-          error instanceof Error ? error.message : 'Gagal mengirim laporan. Silakan coba lagi.',
-        variant: 'destructive',
-      });
+      toast.error('Validasi Error');
     } finally {
       setIsLoading(false);
     }

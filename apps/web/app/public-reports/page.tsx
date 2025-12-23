@@ -21,7 +21,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { getComments, mockDisasterReports, mockRoadReports, saveComment } from '@/data/mockData';
-import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS, getImageUrl } from '@/lib/api/config';
 import { DisasterReport, ReportComment, RoadReport } from '@/types';
 import {
@@ -37,6 +36,7 @@ import {
   User,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 function CommentSection({
   reportId,
@@ -46,7 +46,6 @@ function CommentSection({
   reportType: 'disaster' | 'road';
 }) {
   const { user, isAuthenticated } = useAuth();
-  const { toast } = useToast();
   const [comments, setComments] = useState<ReportComment[]>(() =>
     getComments(reportId, reportType)
   );
@@ -55,11 +54,7 @@ function CommentSection({
   const handleSubmitComment = () => {
     if (!newComment.trim()) return;
     if (!isAuthenticated || !user) {
-      toast({
-        title: 'Login Diperlukan',
-        description: 'Silakan login untuk memberikan komentar.',
-        variant: 'destructive',
-      });
+      toast.error('Login diperlukan.');
       return;
     }
 
@@ -79,10 +74,7 @@ function CommentSection({
     saveComment(comment);
     setComments([comment, ...comments]);
     setNewComment('');
-    toast({
-      title: 'Komentar Ditambahkan',
-      description: 'Komentar Anda berhasil ditambahkan.',
-    });
+    toast.success('Komentar ditambahkan.');
   };
 
   return (
@@ -380,7 +372,6 @@ export default function PublicReports() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
 
   // Fetch reports from API
   useEffect(() => {
@@ -486,11 +477,7 @@ export default function PublicReports() {
         setDisasterReports(mockDisasterReports);
         setRoadReports(mockRoadReports);
 
-        toast({
-          title: 'API tidak bisa diakses',
-          description: 'Menampilkan data demo (mock) sementara.',
-          variant: 'destructive',
-        });
+        toast.error('API tidak bisa diakses');
       } finally {
         setIsLoading(false);
       }
