@@ -1,25 +1,36 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+'use client';
+
 import { MainLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, User, Building2 } from 'lucide-react';
+import { Building2, Shield, User } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState, type FormEvent } from 'react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'citizen' | 'government'>('citizen');
+
   const { login } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
@@ -27,10 +38,15 @@ export default function Login() {
 
     if (success) {
       toast({ title: 'Berhasil masuk!', description: 'Selamat datang kembali.' });
-      navigate(activeTab === 'government' ? '/admin' : '/');
+      router.push(activeTab === 'government' ? '/admin' : '/');
     } else {
-      toast({ title: 'Gagal masuk', description: 'Email atau password salah.', variant: 'destructive' });
+      toast({
+        title: 'Gagal masuk',
+        description: 'Email atau password salah.',
+        variant: 'destructive',
+      });
     }
+
     setIsLoading(false);
   };
 
@@ -47,35 +63,67 @@ export default function Login() {
             <CardTitle className="text-2xl">Masuk ke Portal</CardTitle>
             <CardDescription>Pilih jenis akun dan masuk</CardDescription>
           </CardHeader>
+
           <CardContent>
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'citizen' | 'government')}>
+            <Tabs
+              value={activeTab}
+              onValueChange={(v) => setActiveTab(v as 'citizen' | 'government')}
+            >
               <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="citizen" className="gap-2"><User className="h-4 w-4" />Warga</TabsTrigger>
-                <TabsTrigger value="government" className="gap-2"><Building2 className="h-4 w-4" />Pemerintah</TabsTrigger>
+                <TabsTrigger value="citizen" className="gap-2">
+                  <User className="h-4 w-4" />
+                  Warga
+                </TabsTrigger>
+                <TabsTrigger value="government" className="gap-2">
+                  <Building2 className="h-4 w-4" />
+                  Pemerintah
+                </TabsTrigger>
               </TabsList>
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={activeTab === 'citizen' ? 'warga@demo.com' : 'pemerintah@demo.com'} required />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={activeTab === 'citizen' ? 'warga@demo.com' : 'pemerintah@demo.com'}
+                    required
+                  />
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
-                  <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={activeTab === 'citizen' ? 'warga123' : 'admin123'} required />
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={activeTab === 'citizen' ? 'warga123' : 'admin123'}
+                    required
+                  />
                 </div>
+
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? 'Memproses...' : 'Masuk'}
                 </Button>
               </form>
             </Tabs>
+
             <div className="mt-4 p-3 bg-muted rounded-lg text-sm">
               <p className="font-medium mb-1">Demo Akun:</p>
               <p className="text-muted-foreground">Warga: warga@demo.com / warga123</p>
               <p className="text-muted-foreground">Pemerintah: pemerintah@demo.com / admin123</p>
             </div>
           </CardContent>
+
           <CardFooter className="justify-center">
             <p className="text-sm text-muted-foreground">
-              Belum punya akun? <Link to="/register" className="text-primary hover:underline">Daftar</Link>
+              Belum punya akun?{' '}
+              <Link href="/register" className="text-primary hover:underline">
+                Daftar
+              </Link>
             </p>
           </CardFooter>
         </Card>

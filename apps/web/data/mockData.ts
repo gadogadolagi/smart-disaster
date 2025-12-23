@@ -1,3 +1,4 @@
+'use client';
 import {
   DashboardStats,
   DisasterReport,
@@ -174,7 +175,7 @@ export const mockDisasterReports: DisasterReport[] = [
       lng: 106.8669,
       district: 'Kampung Melayu',
     },
-    images: ['/placeholder.svg'],
+    images: ['.././gambar1.jpg'],
     status: 'in_progress',
     riskLevel: 'high',
     reportedBy: { id: 'user-1', name: 'Budi Santoso', phone: '081234567890' },
@@ -193,7 +194,7 @@ export const mockDisasterReports: DisasterReport[] = [
       lng: 106.8387,
       district: 'Menteng',
     },
-    images: ['/placeholder.svg'],
+    images: ['.././gambar2.jpg'],
     status: 'verified',
     riskLevel: 'medium',
     reportedBy: { id: 'user-2', name: 'Siti Aminah', phone: '087654321098' },
@@ -211,7 +212,7 @@ export const mockDisasterReports: DisasterReport[] = [
       lng: 106.9,
       district: 'Pulogadung',
     },
-    images: ['/placeholder.svg'],
+    images: ['.././gambar3.jpg'],
     status: 'in_progress',
     riskLevel: 'critical',
     reportedBy: { id: 'user-3', name: 'Ahmad Hidayat' },
