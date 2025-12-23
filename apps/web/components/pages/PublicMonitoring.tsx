@@ -27,7 +27,7 @@ import {
   Thermometer,
   Wind,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 
 const weatherIcons = {
   sunny: Sun,
@@ -377,21 +377,21 @@ export default function PublicMonitoring() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Link to="/report-disaster">
+              <Link href="/report-disaster">
                 <Button variant="outline" className="w-full h-auto py-6 flex-col gap-2">
                   <AlertTriangle className="h-8 w-8 text-destructive" />
                   <span className="font-semibold">Laporkan Bencana</span>
                   <span className="text-xs text-muted-foreground">Banjir, Kebakaran, Longsor</span>
                 </Button>
               </Link>
-              <Link to="/report-road">
+              <Link href="/report-road">
                 <Button variant="outline" className="w-full h-auto py-6 flex-col gap-2">
                   <Construction className="h-8 w-8 text-emergency-warning" />
                   <span className="font-semibold">Lapor Jalan Rusak</span>
                   <span className="text-xs text-muted-foreground">Berlubang, Retak, Longsor</span>
                 </Button>
               </Link>
-              <Link to="/public-reports">
+              <Link href="/public-reports">
                 <Button variant="outline" className="w-full h-auto py-6 flex-col gap-2">
                   <Eye className="h-8 w-8 text-primary" />
                   <span className="font-semibold">Lihat Semua Laporan</span>

@@ -1,51 +1,55 @@
-import { useState } from 'react';
+'use client';
 import { MainLayout } from '@/components/layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { 
-  getDisasterReports, 
-  getRoadReports,
-  getComments,
-  saveComment 
-} from '@/data/mockData';
-import { useAuth } from '@/contexts/AuthContext';
-import { DisasterReport, RoadReport, ReportComment } from '@/types';
-import { 
-  StatusBadge, 
-  RiskLevelBadge, 
+import {
   DangerLevelBadge,
   DisasterTypeBadge,
-  RoadIssueTypeBadge
+  RiskLevelBadge,
+  RoadIssueTypeBadge,
+  StatusBadge,
 } from '@/components/shared';
-import { 
-  AlertTriangle, 
-  Construction,
-  MapPin,
-  Clock,
-  MessageCircle,
-  Send,
-  Search,
-  User,
-  Shield,
-  Eye
-} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/contexts/AuthContext';
+import { getComments, getDisasterReports, getRoadReports, saveComment } from '@/data/mockData';
 import { useToast } from '@/hooks/use-toast';
+import { DisasterReport, ReportComment, RoadReport } from '@/types';
+import {
+  AlertTriangle,
+  Clock,
+  Construction,
+  Eye,
+  MapPin,
+  MessageCircle,
+  Search,
+  Send,
+  Shield,
+  User,
+} from 'lucide-react';
+import { useState } from 'react';
 
-function CommentSection({ 
-  reportId, 
-  reportType 
-}: { 
-  reportId: string; 
+function CommentSection({
+  reportId,
+  reportType,
+}: {
+  reportId: string;
   reportType: 'disaster' | 'road';
 }) {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
-  const [comments, setComments] = useState<ReportComment[]>(() => getComments(reportId, reportType));
+  const [comments, setComments] = useState<ReportComment[]>(() =>
+    getComments(reportId, reportType)
+  );
   const [newComment, setNewComment] = useState('');
 
   const handleSubmitComment = () => {
@@ -87,18 +91,22 @@ function CommentSection({
         <MessageCircle className="h-4 w-4" />
         Komentar & Progres ({comments.length})
       </h4>
-      
+
       {/* Add Comment */}
       <div className="flex gap-2">
         <Textarea
-          placeholder={isAuthenticated ? "Tulis komentar atau update progres..." : "Login untuk memberikan komentar..."}
+          placeholder={
+            isAuthenticated
+              ? 'Tulis komentar atau update progres...'
+              : 'Login untuk memberikan komentar...'
+          }
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           className="min-h-[60px]"
           disabled={!isAuthenticated}
         />
-        <Button 
-          size="icon" 
+        <Button
+          size="icon"
           onClick={handleSubmitComment}
           disabled={!isAuthenticated || !newComment.trim()}
         >
@@ -127,7 +135,9 @@ function CommentSection({
                   <p className="text-sm font-medium flex items-center gap-2">
                     {comment.author.name}
                     {comment.author.role === 'government' && (
-                      <Badge variant="secondary" className="text-xs">Pemerintah</Badge>
+                      <Badge variant="secondary" className="text-xs">
+                        Pemerintah
+                      </Badge>
                     )}
                   </p>
                   <p className="text-xs text-muted-foreground">
@@ -164,9 +174,7 @@ function DisasterReportCard({ report }: { report: DisasterReport }) {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-              {report.description}
-            </p>
+            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{report.description}</p>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <DisasterTypeBadge type={report.type} />
@@ -193,7 +201,7 @@ function DisasterReportCard({ report }: { report: DisasterReport }) {
             <DisasterTypeBadge type={report.type} />
             <RiskLevelBadge level={report.riskLevel} />
           </div>
-          
+
           <div className="grid gap-4 text-sm">
             <div>
               <p className="font-medium text-muted-foreground">Lokasi</p>
@@ -230,9 +238,7 @@ function DisasterReportCard({ report }: { report: DisasterReport }) {
                 <Clock className="h-3 w-3" />
                 Dibuat: {new Date(report.createdAt).toLocaleString('id-ID')}
               </span>
-              <span>
-                Update: {new Date(report.updatedAt).toLocaleString('id-ID')}
-              </span>
+              <span>Update: {new Date(report.updatedAt).toLocaleString('id-ID')}</span>
             </div>
           </div>
 
@@ -263,9 +269,7 @@ function RoadReportCard({ report }: { report: RoadReport }) {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-              {report.description}
-            </p>
+            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{report.description}</p>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <RoadIssueTypeBadge type={report.type} />
@@ -292,7 +296,7 @@ function RoadReportCard({ report }: { report: RoadReport }) {
             <RoadIssueTypeBadge type={report.type} />
             <DangerLevelBadge level={report.dangerLevel} />
           </div>
-          
+
           <div className="grid gap-4 text-sm">
             <div>
               <p className="font-medium text-muted-foreground">Lokasi</p>
@@ -313,9 +317,17 @@ function RoadReportCard({ report }: { report: RoadReport }) {
               <div className="p-3 rounded-lg bg-accent/50 border">
                 <p className="font-medium mb-2">Analisis AI</p>
                 <div className="space-y-2 text-sm">
-                  <p><strong>Masalah Terdeteksi:</strong> {report.aiAnalysis.detectedIssues.join(', ')}</p>
-                  <p><strong>Tingkat Kepercayaan:</strong> {Math.round(report.aiAnalysis.confidence * 100)}%</p>
-                  <p><strong>Rekomendasi:</strong> {report.aiAnalysis.recommendedAction}</p>
+                  <p>
+                    <strong>Masalah Terdeteksi:</strong>{' '}
+                    {report.aiAnalysis.detectedIssues.join(', ')}
+                  </p>
+                  <p>
+                    <strong>Tingkat Kepercayaan:</strong>{' '}
+                    {Math.round(report.aiAnalysis.confidence * 100)}%
+                  </p>
+                  <p>
+                    <strong>Rekomendasi:</strong> {report.aiAnalysis.recommendedAction}
+                  </p>
                 </div>
               </div>
             )}
@@ -324,9 +336,7 @@ function RoadReportCard({ report }: { report: RoadReport }) {
                 <Clock className="h-3 w-3" />
                 Dibuat: {new Date(report.createdAt).toLocaleString('id-ID')}
               </span>
-              <span>
-                Update: {new Date(report.updatedAt).toLocaleString('id-ID')}
-              </span>
+              <span>Update: {new Date(report.updatedAt).toLocaleString('id-ID')}</span>
             </div>
           </div>
 
@@ -345,13 +355,13 @@ export default function PublicReports() {
 
   const filterReports = <T extends DisasterReport | RoadReport>(reports: T[]): T[] => {
     return reports.filter((report) => {
-      const matchesSearch = 
+      const matchesSearch =
         report.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         report.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         report.location.district.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       const matchesStatus = statusFilter === 'all' || report.status === statusFilter;
-      
+
       return matchesSearch && matchesStatus;
     });
   };
@@ -368,8 +378,8 @@ export default function PublicReports() {
             Laporan <span className="text-primary">Publik</span>
           </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Lihat semua laporan bencana dan infrastruktur dari warga. 
-            Pantau status penanganan dan berikan komentar untuk ikut memantau progres.
+            Lihat semua laporan bencana dan infrastruktur dari warga. Pantau status penanganan dan
+            berikan komentar untuk ikut memantau progres.
           </p>
         </div>
 
@@ -394,10 +404,15 @@ export default function PublicReports() {
                     size="sm"
                     onClick={() => setStatusFilter(status)}
                   >
-                    {status === 'all' ? 'Semua' :
-                     status === 'pending' ? 'Menunggu' :
-                     status === 'verified' ? 'Terverifikasi' :
-                     status === 'in_progress' ? 'Proses' : 'Selesai'}
+                    {status === 'all'
+                      ? 'Semua'
+                      : status === 'pending'
+                        ? 'Menunggu'
+                        : status === 'verified'
+                          ? 'Terverifikasi'
+                          : status === 'in_progress'
+                            ? 'Proses'
+                            : 'Selesai'}
                   </Button>
                 ))}
               </div>
@@ -425,7 +440,7 @@ export default function PublicReports() {
                   <Eye className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
                   <h3 className="font-semibold mb-2">Tidak Ada Laporan</h3>
                   <p className="text-muted-foreground">
-                    {searchQuery || statusFilter !== 'all' 
+                    {searchQuery || statusFilter !== 'all'
                       ? 'Tidak ditemukan laporan yang sesuai dengan filter.'
                       : 'Belum ada laporan bencana yang masuk.'}
                   </p>
@@ -447,7 +462,7 @@ export default function PublicReports() {
                   <Eye className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
                   <h3 className="font-semibold mb-2">Tidak Ada Laporan</h3>
                   <p className="text-muted-foreground">
-                    {searchQuery || statusFilter !== 'all' 
+                    {searchQuery || statusFilter !== 'all'
                       ? 'Tidak ditemukan laporan yang sesuai dengan filter.'
                       : 'Belum ada laporan jalan rusak yang masuk.'}
                   </p>

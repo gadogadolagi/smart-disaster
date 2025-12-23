@@ -16,6 +16,7 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: 'UHTP Smart-Disaster',
   description: 'generate by team gado gado',
+  icons: '.././uhtpsmartdisaster.jpeg',
 };
 
 export default function RootLayout({

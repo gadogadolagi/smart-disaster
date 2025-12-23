@@ -406,6 +406,11 @@ export default function Home() {
                       alt={report.title}
                       className="w-full h-full object-cover"
                     />
+                    {/* <Image
+                      src=".././public/gambar1.jpg"
+                      alt={report.title}
+                      className="w-full h-full object-cover"
+                    /> */}
                     <div className="absolute top-3 right-3">
                       <Badge
                         variant={
@@ -476,7 +481,7 @@ export default function Home() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="gap-2 bg-transparent border-white text-white hover:bg-white/20"
+                  className="gap-2 bg-[#2662D9] border-white text-white hover:bg-gray hover:text-white"
                 >
                   119 - Ambulans
                 </Button>
