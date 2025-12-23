@@ -1,9 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 
-import { MainLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,15 +17,14 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/lib/api/config';
 import type { RoadIssueType } from '@/types';
-import { Construction, Upload, Brain, X } from 'lucide-react';
+import { Brain, Construction, Upload, X } from 'lucide-react';
+import { toast } from 'sonner';
 
-export default function ReportRoad() {
+export default function LaporkanJalan() {
   const { user } = useAuth();
   const router = useRouter();
-  const { toast } = useToast();
 
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -101,26 +99,19 @@ export default function ReportRoad() {
 
       const result = await response.json();
 
-      toast({
-        title: 'Laporan terkirim!',
-        description: 'Laporan jalan rusak Anda telah dikirim dan akan dianalisis.',
-      });
+      toast.success('Laporan terkirim!');
 
       router.push('/public-reports');
     } catch (error) {
       console.error('Error submitting report:', error);
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Gagal mengirim laporan. Silakan coba lagi.',
-        variant: 'destructive',
-      });
+      toast.error('Error');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <MainLayout>
+    <>
       <div className="container py-8 max-w-2xl">
         <Card>
           <CardHeader>
@@ -290,6 +281,6 @@ export default function ReportRoad() {
           </CardContent>
         </Card>
       </div>
-    </MainLayout>
+    </>
   );
 }
