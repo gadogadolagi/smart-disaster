@@ -1,0 +1,151 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  citizen
+  government
+}
+
+enum DisasterType {
+  flood
+  fire
+  fallen_tree
+  landslide
+  earthquake
+  other
+}
+
+enum RoadIssueType {
+  pothole
+  landslide
+  bridge_damage
+  crack
+  flooding
+}
+
+enum ReportStatus {
+  pending
+  verified
+  in_progress
+  resolved
+}
+
+enum RiskLevel {
+  low
+  medium
+  high
+  critical
+}
+
+enum DangerLevel {
+  minor
+  moderate
+  severe
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  phone     String?
+  role      UserRole @default(citizen)
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  disasterReports DisasterReport[]
+  roadReports     RoadReport[]
+  comments        Comment[]
+
+  @@map("users")
+}
+
+model DisasterReport {
+  id          String       @id @default(cuid())
+  type        DisasterType
+  title       String
+  description String
+  address     String
+  lat         Float
+  lng         Float
+  district    String
+  images      String[]     @default([])
+  status      ReportStatus @default(pending)
+  riskLevel   RiskLevel    @default(medium)
+
+  // User relation (optional for anonymous reports)
+  reportedById String?
+  reportedBy   User?   @relation(fields: [reportedById], references: [id], onDelete: SetNull)
+
+  // Anonymous reporter info (if no user logged in)
+  reporterName  String?
+  reporterPhone String?
+
+  handledBy String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  comments Comment[]
+
+  @@map("disaster_reports")
+}
+
+model RoadReport {
+  id          String        @id @default(cuid())
+  type        RoadIssueType
+  title       String
+  description String
+  address     String
+  lat         Float
+  lng         Float
+  district    String
+  images      String[]      @default([])
+  status      ReportStatus  @default(pending)
+  dangerLevel DangerLevel   @default(moderate)
+
+  // User relation (optional for anonymous reports)
+  reportedById String?
+  reportedBy   User?   @relation(fields: [reportedById], references: [id], onDelete: SetNull)
+
+  // Anonymous reporter info (if no user logged in)
+  reporterName  String?
+  reporterPhone String?
+
+  // AI Analysis fields (optional)
+  aiDetectedIssues    String[]
+  aiConfidence        Float?
+  aiRecommendedAction String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  comments Comment[]
+
+  @@map("road_reports")
+}
+
+model Comment {
+  id               String          @id @default(cuid())
+  reportId         String
+  reportType       String // 'disaster' or 'road'
+  content          String
+  authorId         String
+  author           User            @relation(fields: [authorId], references: [id])
+  createdAt        DateTime        @default(now())
+  DisasterReport   DisasterReport? @relation(fields: [disasterReportId], references: [id])
+  disasterReportId String?
+  RoadReport       RoadReport?     @relation(fields: [roadReportId], references: [id])
+  roadReportId     String?
+
+  @@map("comments")
+}

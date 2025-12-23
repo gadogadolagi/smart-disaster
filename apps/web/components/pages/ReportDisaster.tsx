@@ -134,10 +134,10 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { saveDisasterReport } from '@/data/mockData';
 import { useToast } from '@/hooks/use-toast';
-import type { DisasterType, RiskLevel } from '@/types';
-import { AlertTriangle, Upload } from 'lucide-react';
+import { API_ENDPOINTS } from '@/lib/api/config';
+import type { DisasterType } from '@/types';
+import { AlertTriangle, Upload, X } from 'lucide-react';
 
 export default function ReportDisaster() {
   const { user, isAuthenticated } = useAuth();
@@ -151,7 +151,10 @@ export default function ReportDisaster() {
     description: '',
     address: '',
     district: '',
+    lat: '-6.2088',
+    lng: '106.8226',
   });
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   // ✅ redirect pakai useEffect (side-effect)
   useEffect(() => {
@@ -161,42 +164,80 @@ export default function ReportDisaster() {
   // (opsional) biar nggak sempat render form saat redirect
   if (!isAuthenticated) return null;
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      // Limit to 5 files
+      const filesToAdd = files.slice(0, 5 - selectedFiles.length);
+      setSelectedFiles([...selectedFiles, ...filesToAdd]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!user) return; // safety
+    if (!user) return;
 
     setIsLoading(true);
 
-    const now = new Date().toISOString();
+    try {
+      // Create FormData for multipart/form-data
+      const formDataToSend = new FormData();
+      formDataToSend.append('type', formData.type);
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('address', formData.address);
+      formDataToSend.append('district', formData.district);
+      formDataToSend.append('lat', formData.lat);
+      formDataToSend.append('lng', formData.lng);
 
-    const report = {
-      id: `report-${Date.now()}`,
-      type: formData.type,
-      title: formData.title,
-      description: formData.description,
-      location: {
-        address: formData.address,
-        lat: -6.2,
-        lng: 106.8,
-        district: formData.district,
-      },
-      images: [],
-      status: 'pending' as const,
-      riskLevel: 'medium' as RiskLevel,
-      reportedBy: { id: user.id, name: user.name, phone: user.phone },
-      createdAt: now,
-      updatedAt: now,
-    };
+      // Add user info (optional, bisa juga anonymous)
+      if (user.id) {
+        // formDataToSend.append('reportedById', user.id);
+      } else {
+        formDataToSend.append('reporterName', user.name);
+        if (user.phone) {
+          formDataToSend.append('reporterPhone', user.phone);
+        }
+      }
 
-    saveDisasterReport(report);
+      // Add image files
+      selectedFiles.forEach((file) => {
+        formDataToSend.append('images', file);
+      });
 
-    toast({
-      title: 'Laporan terkirim!',
-      description: 'Tim kami akan segera memverifikasi laporan Anda.',
-    });
+      const response = await fetch(API_ENDPOINTS.reports.disaster.create, {
+        method: 'POST',
+        body: formDataToSend,
+      });
 
-    router.push('/my-reports');
-    setIsLoading(false);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Gagal mengirim laporan');
+      }
+
+      const result = await response.json();
+
+      toast({
+        title: 'Laporan terkirim!',
+        description: 'Tim kami akan segera memverifikasi laporan Anda.',
+      });
+
+      router.push('/public-reports');
+    } catch (error) {
+      console.error('Error submitting report:', error);
+      toast({
+        title: 'Error',
+        description:
+          error instanceof Error ? error.message : 'Gagal mengirim laporan. Silakan coba lagi.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -283,10 +324,58 @@ export default function ReportDisaster() {
               </div>
 
               <div className="space-y-2">
-                <Label>Foto Lokasi (Opsional)</Label>
-                <div className="border-2 border-dashed rounded-lg p-8 text-center">
-                  <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground">Fitur upload foto (simulasi)</p>
+                <Label>Foto Lokasi (Opsional, maks 5 file)</Label>
+                <div className="border-2 border-dashed rounded-lg p-6">
+                  <input
+                    type="file"
+                    id="file-upload"
+                    accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                    multiple
+                    onChange={handleFileChange}
+                    className="hidden"
+                    disabled={selectedFiles.length >= 5}
+                  />
+                  <label
+                    htmlFor="file-upload"
+                    className="flex flex-col items-center justify-center cursor-pointer"
+                  >
+                    <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground text-center">
+                      Klik untuk upload foto atau drag & drop
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Maksimal 5MB per file, format: JPEG, PNG, WebP, GIF
+                    </p>
+                  </label>
+
+                  {/* Preview selected files */}
+                  {selectedFiles.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      {selectedFiles.map((file, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-2 bg-muted rounded-lg"
+                        >
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <Upload className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                            <span className="text-sm truncate">{file.name}</span>
+                            <span className="text-xs text-muted-foreground flex-shrink-0">
+                              ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                            </span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 flex-shrink-0"
+                            onClick={() => removeFile(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 

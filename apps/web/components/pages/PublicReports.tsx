@@ -21,8 +21,9 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
-import { getComments, getDisasterReports, getRoadReports, saveComment } from '@/data/mockData';
+import { getComments, getRoadReports, saveComment } from '@/data/mockData';
 import { useToast } from '@/hooks/use-toast';
+import { API_ENDPOINTS, getImageUrl } from '@/lib/api/config';
 import { DisasterReport, ReportComment, RoadReport } from '@/types';
 import {
   AlertTriangle,
@@ -36,7 +37,7 @@ import {
   Shield,
   User,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 function CommentSection({
   reportId,
@@ -174,6 +175,15 @@ function DisasterReportCard({ report }: { report: DisasterReport }) {
             </div>
           </CardHeader>
           <CardContent>
+            {report.images && report.images.length > 0 && (
+              <div className="mb-3 rounded-lg overflow-hidden">
+                <img
+                  src={getImageUrl(report.images[0])}
+                  alt={report.title}
+                  className="w-full h-32 object-cover"
+                />
+              </div>
+            )}
             <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{report.description}</p>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -201,6 +211,24 @@ function DisasterReportCard({ report }: { report: DisasterReport }) {
             <DisasterTypeBadge type={report.type} />
             <RiskLevelBadge level={report.riskLevel} />
           </div>
+
+          {/* Images Gallery */}
+          {report.images && report.images.length > 0 && (
+            <div>
+              <p className="font-medium text-muted-foreground mb-2">Foto Bukti</p>
+              <div className="grid grid-cols-2 gap-2">
+                {report.images.map((image, idx) => (
+                  <div key={idx} className="rounded-lg overflow-hidden">
+                    <img
+                      src={getImageUrl(image)}
+                      alt={`${report.title} - Foto ${idx + 1}`}
+                      className="w-full h-32 object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="grid gap-4 text-sm">
             <div>
@@ -348,10 +376,75 @@ function RoadReportCard({ report }: { report: RoadReport }) {
 }
 
 export default function PublicReports() {
-  const [disasterReports] = useState<DisasterReport[]>(() => getDisasterReports());
+  const [disasterReports, setDisasterReports] = useState<DisasterReport[]>([]);
   const [roadReports] = useState<RoadReport[]>(() => getRoadReports());
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  // Fetch disaster reports from API
+  useEffect(() => {
+    const fetchDisasterReports = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(API_ENDPOINTS.reports.disaster.list);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch disaster reports');
+        }
+
+        const result = await response.json();
+        
+        // Transform API response to match frontend type
+        const reports: DisasterReport[] = result.data.map((report: any) => ({
+          id: report.id,
+          type: report.type,
+          title: report.title,
+          description: report.description,
+          location: {
+            address: report.address,
+            lat: report.lat,
+            lng: report.lng,
+            district: report.district,
+          },
+          images: report.images || [],
+          status: report.status,
+          riskLevel: report.riskLevel,
+          reportedBy: report.reportedBy
+            ? {
+                id: report.reportedBy.id,
+                name: report.reportedBy.name,
+                phone: report.reportedBy.phone,
+              }
+            : {
+                id: 'anonymous',
+                name: report.reporterName || 'Anonim',
+                phone: report.reporterPhone,
+              },
+          createdAt: report.createdAt,
+          updatedAt: report.updatedAt,
+          handledBy: report.handledBy,
+          notes: report.notes,
+        }));
+
+        setDisasterReports(reports);
+      } catch (error) {
+        console.error('Error fetching disaster reports:', error);
+        toast({
+          title: 'Error',
+          description: 'Gagal memuat laporan bencana. Silakan refresh halaman.',
+          variant: 'destructive',
+        });
+        // Fallback to empty array
+        setDisasterReports([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDisasterReports();
+  }, [toast]);
 
   const filterReports = <T extends DisasterReport | RoadReport>(reports: T[]): T[] => {
     return reports.filter((report) => {
@@ -434,7 +527,13 @@ export default function PublicReports() {
           </TabsList>
 
           <TabsContent value="disaster">
-            {filteredDisasterReports.length === 0 ? (
+            {isLoading ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <p className="text-muted-foreground">Memuat laporan...</p>
+                </CardContent>
+              </Card>
+            ) : filteredDisasterReports.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center">
                   <Eye className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
