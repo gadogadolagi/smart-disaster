@@ -225,7 +225,7 @@ const citizenNavItems = [
 ];
 
 const governmentNavItems = [
-  { href: '/dashboardadmin', label: 'Dashboard Admin', icon: LayoutDashboard },
+  { href: '/dashboard-admin', label: 'Dashboard Admin', icon: LayoutDashboard },
 ];
 
 function isPathActive(pathname: string, href: string) {
