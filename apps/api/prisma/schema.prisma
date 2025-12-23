@@ -56,17 +56,31 @@ model User {
   id        String   @id @default(cuid())
   name      String
   email     String   @unique
+  password  String // Hashed password
   phone     String?
   role      UserRole @default(citizen)
   avatar    String?
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   disasterReports DisasterReport[]
   roadReports     RoadReport[]
   comments        Comment[]
+  sessions        Session[]
 
   @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("sessions")
 }
 
 model DisasterReport {

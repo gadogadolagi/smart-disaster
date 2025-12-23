@@ -31,7 +31,7 @@ const storage = multer.diskStorage({
 // File filter - only allow images
 const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   const allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-  
+
   if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {
@@ -48,4 +48,3 @@ export const upload = multer({
     files: 5, // Max 5 files per request
   },
 });
-
