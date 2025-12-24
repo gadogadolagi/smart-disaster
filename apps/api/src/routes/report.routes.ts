@@ -130,7 +130,7 @@ router.post('/disaster', uploadRateLimiter, ...reportController.createDisasterRe
  * @swagger
  * /api/reports/disaster/{id}:
  *   put:
- *     summary: Update disaster report (government only)
+ *     summary: Update disaster report (admin or petugas only)
  *     tags: [Reports - Disaster]
  *     security:
  *       - bearerAuth: []
@@ -163,14 +163,14 @@ router.post('/disaster', uploadRateLimiter, ...reportController.createDisasterRe
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden - government role required
+ *         description: Forbidden - admin or petugas role required
  *       404:
  *         description: Report not found
  */
 router.put(
   '/disaster/:id',
   authenticate,
-  authorize('government'),
+  authorize('admin', 'petugas'),
   reportController.updateDisasterReport
 );
 
@@ -178,7 +178,7 @@ router.put(
  * @swagger
  * /api/reports/disaster/{id}:
  *   delete:
- *     summary: Delete disaster report (government only)
+ *     summary: Delete disaster report (admin only)
  *     tags: [Reports - Disaster]
  *     security:
  *       - bearerAuth: []
@@ -194,14 +194,14 @@ router.put(
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden - government role required
+ *         description: Forbidden - admin or petugas role required
  *       404:
  *         description: Report not found
  */
 router.delete(
   '/disaster/:id',
   authenticate,
-  authorize('government'),
+  authorize('admin'),
   reportController.deleteDisasterReport
 );
 
@@ -321,7 +321,7 @@ router.post('/road', uploadRateLimiter, ...reportController.createRoadReport);
  * @swagger
  * /api/reports/road/{id}:
  *   put:
- *     summary: Update road damage report (government only)
+ *     summary: Update road damage report (admin or petugas only)
  *     tags: [Reports - Road]
  *     security:
  *       - bearerAuth: []
@@ -360,7 +360,7 @@ router.put('/road/:id', authenticate, authorize('government'), reportController.
  * @swagger
  * /api/reports/road/{id}:
  *   delete:
- *     summary: Delete road damage report (government only)
+ *     summary: Delete road damage report (admin only)
  *     tags: [Reports - Road]
  *     security:
  *       - bearerAuth: []
@@ -383,7 +383,7 @@ router.put('/road/:id', authenticate, authorize('government'), reportController.
 router.delete(
   '/road/:id',
   authenticate,
-  authorize('government'),
+  authorize('admin'),
   reportController.deleteRoadReport
 );
 

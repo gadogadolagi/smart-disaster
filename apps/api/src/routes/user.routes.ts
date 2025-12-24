@@ -11,7 +11,7 @@ router.use(authenticate);
  * @swagger
  * /api/users:
  *   get:
- *     summary: Get all users (government only)
+ *     summary: Get all users (admin only)
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -30,7 +30,7 @@ router.use(authenticate);
  *         name: role
  *         schema:
  *           type: string
- *           enum: [citizen, government, admin]
+ *           enum: [user, admin, petugas]
  *       - in: query
  *         name: search
  *         schema:
@@ -42,9 +42,9 @@ router.use(authenticate);
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden - government role required
+ *         description: Forbidden - admin role required
  */
-router.get('/', authorize('government'), userController.getUsers);
+router.get('/', authorize('admin'), userController.getUsers);
 
 /**
  * @swagger
@@ -114,7 +114,7 @@ router.put('/:id', userController.updateUser);
  * @swagger
  * /api/users/{id}:
  *   delete:
- *     summary: Delete user (government only)
+ *     summary: Delete user (admin only)
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -130,10 +130,10 @@ router.put('/:id', userController.updateUser);
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden - government role required
+ *         description: Forbidden - admin role required
  *       404:
  *         description: User not found
  */
-router.delete('/:id', authorize('government'), userController.deleteUser);
+router.delete('/:id', authorize('admin'), userController.deleteUser);
 
 export default router;
