@@ -5,8 +5,8 @@ import { MESSAGES } from '../utils/constants';
 
 export class UserService {
   async getUsers(query: any, requesterRole: string) {
-    // Only government can view all users
-    if (requesterRole !== 'government') {
+    // Only admin can view all users
+    if (requesterRole !== 'admin') {
       throw new AuthorizationError(MESSAGES.AUTH_FORBIDDEN);
     }
 
@@ -68,8 +68,8 @@ export class UserService {
       throw new NotFoundError('User not found');
     }
 
-    // Users can only view their own profile unless they're government
-    if (requesterId !== id && requesterRole !== 'government') {
+    // Users can only view their own profile unless they're admin
+    if (requesterId !== id && requesterRole !== 'admin') {
       throw new AuthorizationError(MESSAGES.AUTH_FORBIDDEN);
     }
 
@@ -81,8 +81,8 @@ export class UserService {
     data: { name?: string; phone?: string; avatar?: string; isActive?: boolean },
     requesterRole: string
   ) {
-    // Only government can update isActive status
-    if (data.isActive !== undefined && requesterRole !== 'government') {
+    // Only admin can update isActive status
+    if (data.isActive !== undefined && requesterRole !== 'admin') {
       throw new AuthorizationError(MESSAGES.AUTH_FORBIDDEN);
     }
 
@@ -93,7 +93,7 @@ export class UserService {
         ...(data.phone !== undefined && { phone: data.phone }),
         ...(data.avatar !== undefined && { avatar: data.avatar }),
         ...(data.isActive !== undefined &&
-          requesterRole === 'government' && { isActive: data.isActive }),
+          requesterRole === 'admin' && { isActive: data.isActive }),
       },
       select: {
         id: true,
@@ -112,8 +112,8 @@ export class UserService {
   }
 
   async deleteUser(id: string, requesterRole: string) {
-    // Only government can delete users
-    if (requesterRole !== 'government') {
+    // Only admin can delete users
+    if (requesterRole !== 'admin') {
       throw new AuthorizationError(MESSAGES.AUTH_FORBIDDEN);
     }
 

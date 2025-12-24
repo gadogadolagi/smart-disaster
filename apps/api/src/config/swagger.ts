@@ -72,7 +72,7 @@ Tambahkan header \`Authorization: Bearer <token>\` pada request yang memerlukan 
             name: { type: 'string' },
             email: { type: 'string', format: 'email' },
             phone: { type: 'string', nullable: true },
-            role: { type: 'string', enum: ['citizen', 'government', 'admin'] },
+            role: { type: 'string', enum: ['user', 'admin', 'petugas'] },
             avatar: { type: 'string', nullable: true },
             isActive: { type: 'boolean' },
             createdAt: { type: 'string', format: 'date-time' },

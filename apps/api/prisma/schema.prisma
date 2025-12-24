@@ -11,8 +11,9 @@ datasource db {
 }
 
 enum UserRole {
-  citizen
-  government
+  user
+  admin
+  petugas
 }
 
 enum DisasterType {
@@ -58,7 +59,7 @@ model User {
   email     String   @unique
   password  String // Hashed password
   phone     String?
-  role      UserRole @default(citizen)
+  role      UserRole @default(user)
   avatar    String?
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())

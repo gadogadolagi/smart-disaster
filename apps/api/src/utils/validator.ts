@@ -22,7 +22,7 @@ export const registerSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
   phone: phoneSchema,
-  role: z.enum(['citizen', 'government']).optional().default('citizen'),
+  role: z.enum(['user', 'admin', 'petugas']).optional().default('user'),
 });
 
 export const loginSchema = z.object({

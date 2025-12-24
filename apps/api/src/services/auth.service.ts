@@ -10,7 +10,7 @@ export interface RegisterData {
   email: string;
   password: string;
   phone?: string;
-  role?: 'citizen' | 'government';
+  role?: 'user' | 'admin' | 'petugas';
 }
 
 export interface LoginData {
@@ -38,7 +38,7 @@ export class AuthService {
       throw new ValidationError(MESSAGES.AUTH_REGISTER_FAILED, validation.error.errors);
     }
 
-    const { name, email, password, phone, role = 'citizen' } = validation.data;
+    const { name, email, password, phone, role = 'user' } = validation.data;
 
     // Check if email already exists
     const existingUser = await prisma.user.findUnique({
