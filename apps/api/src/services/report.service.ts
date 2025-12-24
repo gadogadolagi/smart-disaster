@@ -1,7 +1,9 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { NotFoundError } from '../utils/errorHandler';
-import { parsePaginationParams, createPaginationResponse } from '../utils/pagination';
-import { Prisma } from '@prisma/client';
+import { logger } from '../utils/logger';
+import { createPaginationResponse, parsePaginationParams } from '../utils/pagination';
+import { aiPredictionService } from './ai-prediction.service';
 
 export class ReportService {
   async getDisasterReports(query: any) {
@@ -35,6 +37,7 @@ export class ReportService {
           images: true,
           status: true,
           riskLevel: true,
+          urgencyPercentage: true,
           reporterName: true,
           reporterPhone: true,
           handledBy: true,
@@ -74,6 +77,7 @@ export class ReportService {
         images: true,
         status: true,
         riskLevel: true,
+        urgencyPercentage: true,
         reporterName: true,
         reporterPhone: true,
         handledBy: true,
@@ -98,6 +102,36 @@ export class ReportService {
   }
 
   async createDisasterReport(data: any, imagePaths: string[]) {
+    // Run AI prediction untuk mendapatkan urgency percentage
+    let urgencyPercentage = 0;
+    let aiMetadata: any = {};
+
+    try {
+      const aiResult = await aiPredictionService.predictUrgency('disaster', data.type, {
+        description: data.description,
+        title: data.title,
+        images: imagePaths,
+      });
+
+      urgencyPercentage = aiResult.urgencyPercentage;
+      aiMetadata = {
+        confidence: aiResult.confidence,
+        detectedIssues: aiResult.detectedIssues,
+        recommendedAction: aiResult.recommendedAction,
+        metadata: aiResult.metadata,
+      };
+
+      logger.info(`AI prediction for disaster report: ${urgencyPercentage}%`, {
+        type: data.type,
+        confidence: aiResult.confidence,
+      });
+    } catch (error) {
+      logger.error('Failed to run AI prediction for disaster report', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // Continue dengan default value jika AI prediction gagal
+    }
+
     const report = await prisma.disasterReport.create({
       data: {
         type: data.type,
@@ -109,6 +143,7 @@ export class ReportService {
         district: data.district,
         images: imagePaths,
         riskLevel: data.riskLevel || 'medium',
+        urgencyPercentage: urgencyPercentage,
         reportedById: data.reportedById || null,
         reporterName: data.reportedById ? null : data.reporterName || null,
         reporterPhone: data.reportedById ? null : data.reporterPhone || null,
@@ -125,6 +160,7 @@ export class ReportService {
         images: true,
         status: true,
         riskLevel: true,
+        urgencyPercentage: true,
         reporterName: true,
         reporterPhone: true,
         handledBy: true,
@@ -168,6 +204,7 @@ export class ReportService {
         images: true,
         status: true,
         riskLevel: true,
+        urgencyPercentage: true,
         reporterName: true,
         reporterPhone: true,
         handledBy: true,
@@ -235,6 +272,7 @@ export class ReportService {
           images: true,
           status: true,
           dangerLevel: true,
+          urgencyPercentage: true,
           reporterName: true,
           reporterPhone: true,
           aiDetectedIssues: true,
@@ -275,6 +313,7 @@ export class ReportService {
         images: true,
         status: true,
         dangerLevel: true,
+        urgencyPercentage: true,
         reporterName: true,
         reporterPhone: true,
         aiDetectedIssues: true,
@@ -300,6 +339,36 @@ export class ReportService {
   }
 
   async createRoadReport(data: any, imagePaths: string[]) {
+    // Run AI prediction untuk mendapatkan urgency percentage
+    let urgencyPercentage = 0;
+    let aiDetectedIssues: string[] = [];
+    let aiConfidence: number | null = null;
+    let aiRecommendedAction: string | null = null;
+
+    try {
+      const aiResult = await aiPredictionService.predictUrgency('road', data.type, {
+        description: data.description,
+        title: data.title,
+        images: imagePaths,
+        type: data.type,
+      });
+
+      urgencyPercentage = aiResult.urgencyPercentage;
+      aiDetectedIssues = aiResult.detectedIssues || [];
+      aiConfidence = aiResult.confidence || null;
+      aiRecommendedAction = aiResult.recommendedAction || null;
+
+      logger.info(`AI prediction for road report: ${urgencyPercentage}%`, {
+        type: data.type,
+        confidence: aiResult.confidence,
+      });
+    } catch (error) {
+      logger.error('Failed to run AI prediction for road report', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // Continue dengan default value jika AI prediction gagal
+    }
+
     const report = await prisma.roadReport.create({
       data: {
         type: data.type,
@@ -311,12 +380,13 @@ export class ReportService {
         district: data.district,
         images: imagePaths,
         dangerLevel: data.dangerLevel || 'moderate',
+        urgencyPercentage: urgencyPercentage,
         reportedById: data.reportedById || null,
         reporterName: data.reportedById ? null : data.reporterName || null,
         reporterPhone: data.reportedById ? null : data.reporterPhone || null,
-        aiDetectedIssues: [],
-        aiConfidence: null,
-        aiRecommendedAction: null,
+        aiDetectedIssues: aiDetectedIssues,
+        aiConfidence: aiConfidence,
+        aiRecommendedAction: aiRecommendedAction,
       },
       select: {
         id: true,
@@ -330,6 +400,7 @@ export class ReportService {
         images: true,
         status: true,
         dangerLevel: true,
+        urgencyPercentage: true,
         reporterName: true,
         reporterPhone: true,
         aiDetectedIssues: true,
@@ -374,6 +445,7 @@ export class ReportService {
         images: true,
         status: true,
         dangerLevel: true,
+        urgencyPercentage: true,
         reporterName: true,
         reporterPhone: true,
         aiDetectedIssues: true,

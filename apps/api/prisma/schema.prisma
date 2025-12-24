@@ -96,6 +96,7 @@ model DisasterReport {
   images      String[]     @default([])
   status      ReportStatus @default(pending)
   riskLevel   RiskLevel    @default(medium)
+  urgencyPercentage Float?  @default(0) // Persentase tingkat bahaya/urgensi (0-100)
 
   // User relation (optional for anonymous reports)
   reportedById String?
@@ -127,6 +128,7 @@ model RoadReport {
   images      String[]      @default([])
   status      ReportStatus  @default(pending)
   dangerLevel DangerLevel   @default(moderate)
+  urgencyPercentage Float?  @default(0) // Persentase tingkat bahaya/urgensi (0-100)
 
   // User relation (optional for anonymous reports)
   reportedById String?
