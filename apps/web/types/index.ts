@@ -1,5 +1,5 @@
 // User & Auth Types
-export type UserRole = 'citizen' | 'government';
+export type UserRole = 'citizen' | 'government' | 'admin' | 'officer';
 
 export interface User {
   id: string;

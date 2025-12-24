@@ -53,24 +53,85 @@ export default function LaporkanBencana() {
     setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
   };
 
+  // const handleSubmit = async (e: FormEvent) => {
+  //   e.preventDefault();
+
+  //   // Validate required fields
+  //   if (!formData.type) {
+  //     toast.error('Validasi Error type data');
+  //     return;
+  //   }
+
+  //   if (!formData.title || !formData.description || !formData.address || !formData.district) {
+  //     toast.error('form harap dilengkapi');
+  //     return;
+  //   }
+
+  //   setIsLoading(true);
+
+  //   try {
+  //     // Create FormData for multipart/form-data
+  //     const formDataToSend = new FormData();
+  //     formDataToSend.append('type', formData.type);
+  //     formDataToSend.append('title', formData.title);
+  //     formDataToSend.append('description', formData.description);
+  //     formDataToSend.append('address', formData.address);
+  //     formDataToSend.append('district', formData.district);
+  //     formDataToSend.append('lat', formData.lat);
+  //     formDataToSend.append('lng', formData.lng);
+
+  //     // Add user info (optional, bisa juga anonymous)
+  //     if (user?.id) {
+  //       formDataToSend.append('reportedById', user.id);
+  //     } else {
+  //       // Use form data or anonymous
+  //       const reporterName = formData.reporterName || 'Anonim';
+  //       const reporterPhone = formData.reporterPhone || '';
+  //       formDataToSend.append('reporterName', reporterName);
+  //       if (reporterPhone) {
+  //         formDataToSend.append('reporterPhone', reporterPhone);
+  //       }
+  //     }
+
+  //     // Add image files
+  //     selectedFiles.forEach((file) => {
+  //       formDataToSend.append('images', file);
+  //     });
+
+  //     const response = await fetch(API_ENDPOINTS.reports.disaster.create, {
+  //       method: 'POST',
+  //       body: formDataToSend,
+  //     });
+
+  //     if (!response.ok) {
+  //       const errorData = await response.json().catch(() => ({}));
+  //       throw new Error(errorData.message || 'Gagal mengirim laporan');
+  //     }
+
+  //     const result = await response.json();
+
+  //     toast.error('Validasi Error');
+
+  //     router.push('/public-reports');
+  //   } catch (error) {
+  //     console.error('Error submitting report:', error);
+  //     toast.error('Validasi Error');
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    // Validate required fields
-    if (!formData.type) {
-      toast.error('Validasi Error');
-      return;
-    }
-
+    if (!formData.type) return toast.error('Jenis bencana wajib dipilih');
     if (!formData.title || !formData.description || !formData.address || !formData.district) {
-      toast.error('Validasi Error');
-      return;
+      return toast.error('Form harap dilengkapi');
     }
 
     setIsLoading(true);
 
     try {
-      // Create FormData for multipart/form-data
       const formDataToSend = new FormData();
       formDataToSend.append('type', formData.type);
       formDataToSend.append('title', formData.title);
@@ -80,42 +141,35 @@ export default function LaporkanBencana() {
       formDataToSend.append('lat', formData.lat);
       formDataToSend.append('lng', formData.lng);
 
-      // Add user info (optional, bisa juga anonymous)
       if (user?.id) {
         formDataToSend.append('reportedById', user.id);
       } else {
-        // Use form data or anonymous
-        const reporterName = formData.reporterName || 'Anonim';
-        const reporterPhone = formData.reporterPhone || '';
-        formDataToSend.append('reporterName', reporterName);
-        if (reporterPhone) {
-          formDataToSend.append('reporterPhone', reporterPhone);
-        }
+        formDataToSend.append('reporterName', formData.reporterName || 'Anonim');
+        if (formData.reporterPhone) formDataToSend.append('reporterPhone', formData.reporterPhone);
       }
 
-      // Add image files
-      selectedFiles.forEach((file) => {
-        formDataToSend.append('images', file);
-      });
+      selectedFiles.forEach((file) => formDataToSend.append('images', file));
 
       const response = await fetch(API_ENDPOINTS.reports.disaster.create, {
         method: 'POST',
         body: formDataToSend,
+        // credentials: 'include', // aktifkan kalau backend pakai cookie/session
       });
 
+      // ambil response body sekali (biar nggak double-read)
+      const data = await response.json().catch(() => null);
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Gagal mengirim laporan');
+        const msg = data?.message || `Gagal mengirim laporan (HTTP ${response.status})`;
+        throw new Error(msg);
       }
 
-      const result = await response.json();
-
-      toast.error('Validasi Error');
-
+      toast.success('Laporan terkirim!');
       router.push('/public-reports');
     } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Gagal mengirim laporan';
       console.error('Error submitting report:', error);
-      toast.error('Validasi Error');
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
