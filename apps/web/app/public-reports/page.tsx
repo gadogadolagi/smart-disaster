@@ -171,7 +171,7 @@ function DisasterReportCard({ report }: { report: DisasterReport }) {
             {report.images && report.images.length > 0 && (
               <div className="mb-3 rounded-lg overflow-hidden">
                 <img
-                  src={getImageUrl(report.images[0])}
+                  src={getImageUrl(report.images[0] || '')}
                   alt={report.title}
                   className="w-full h-32 object-cover"
                 />
@@ -185,9 +185,7 @@ function DisasterReportCard({ report }: { report: DisasterReport }) {
                     <TrendingUp className="h-3 w-3" />
                     Tingkat Urgensi
                   </span>
-                  <span className="text-xs font-bold">
-                    {report.urgencyPercentage.toFixed(1)}%
-                  </span>
+                  <span className="text-xs font-bold">{report.urgencyPercentage.toFixed(1)}%</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2">
                   <div
@@ -242,9 +240,7 @@ function DisasterReportCard({ report }: { report: DisasterReport }) {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Persentase Urgensi</span>
-                  <span className="text-lg font-bold">
-                    {report.urgencyPercentage.toFixed(1)}%
-                  </span>
+                  <span className="text-lg font-bold">{report.urgencyPercentage.toFixed(1)}%</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-3">
                   <div
@@ -281,16 +277,17 @@ function DisasterReportCard({ report }: { report: DisasterReport }) {
                 <p className="font-semibold">Analisis Machine Learning</p>
               </div>
               <div className="space-y-2 text-sm">
-                {report.aiAnalysis.detectedIssues && report.aiAnalysis.detectedIssues.length > 0 && (
-                  <div>
-                    <p className="font-medium text-muted-foreground mb-1">Masalah Terdeteksi:</p>
-                    <ul className="list-disc list-inside space-y-1">
-                      {report.aiAnalysis.detectedIssues.map((issue, idx) => (
-                        <li key={idx}>{issue}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                {report.aiAnalysis.detectedIssues &&
+                  report.aiAnalysis.detectedIssues.length > 0 && (
+                    <div>
+                      <p className="font-medium text-muted-foreground mb-1">Masalah Terdeteksi:</p>
+                      <ul className="list-disc list-inside space-y-1">
+                        {report.aiAnalysis.detectedIssues.map((issue, idx) => (
+                          <li key={idx}>{issue}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 <div>
                   <p className="font-medium text-muted-foreground">Tingkat Kepercayaan:</p>
                   <p>{Math.round((report.aiAnalysis.confidence || 0) * 100)}%</p>
@@ -394,7 +391,7 @@ function RoadReportCard({ report }: { report: RoadReport }) {
             {report.images && report.images.length > 0 && (
               <div className="mb-3 rounded-lg overflow-hidden">
                 <img
-                  src={getImageUrl(report.images[0])}
+                  src={getImageUrl(report.images[0] || '')}
                   alt={report.title}
                   className="w-full h-32 object-cover"
                 />
@@ -408,9 +405,7 @@ function RoadReportCard({ report }: { report: RoadReport }) {
                     <TrendingUp className="h-3 w-3" />
                     Tingkat Urgensi
                   </span>
-                  <span className="text-xs font-bold">
-                    {report.urgencyPercentage.toFixed(1)}%
-                  </span>
+                  <span className="text-xs font-bold">{report.urgencyPercentage.toFixed(1)}%</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2">
                   <div
@@ -465,9 +460,7 @@ function RoadReportCard({ report }: { report: RoadReport }) {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Persentase Urgensi</span>
-                  <span className="text-lg font-bold">
-                    {report.urgencyPercentage.toFixed(1)}%
-                  </span>
+                  <span className="text-lg font-bold">{report.urgencyPercentage.toFixed(1)}%</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-3">
                   <div
@@ -504,16 +497,17 @@ function RoadReportCard({ report }: { report: RoadReport }) {
                 <p className="font-semibold">Analisis Machine Learning</p>
               </div>
               <div className="space-y-2 text-sm">
-                {report.aiAnalysis.detectedIssues && report.aiAnalysis.detectedIssues.length > 0 && (
-                  <div>
-                    <p className="font-medium text-muted-foreground mb-1">Masalah Terdeteksi:</p>
-                    <ul className="list-disc list-inside space-y-1">
-                      {report.aiAnalysis.detectedIssues.map((issue, idx) => (
-                        <li key={idx}>{issue}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                {report.aiAnalysis.detectedIssues &&
+                  report.aiAnalysis.detectedIssues.length > 0 && (
+                    <div>
+                      <p className="font-medium text-muted-foreground mb-1">Masalah Terdeteksi:</p>
+                      <ul className="list-disc list-inside space-y-1">
+                        {report.aiAnalysis.detectedIssues.map((issue, idx) => (
+                          <li key={idx}>{issue}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 <div>
                   <p className="font-medium text-muted-foreground">Tingkat Kepercayaan:</p>
                   <p>{Math.round((report.aiAnalysis.confidence || 0) * 100)}%</p>
