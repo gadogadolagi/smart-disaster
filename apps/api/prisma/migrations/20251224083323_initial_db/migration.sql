@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "UserRole" AS ENUM ('citizen', 'government');
+CREATE TYPE "UserRole" AS ENUM ('user', 'admin', 'petugas');
 
 -- CreateEnum
 CREATE TYPE "DisasterType" AS ENUM ('flood', 'fire', 'fallen_tree', 'landslide', 'earthquake', 'other');
@@ -21,13 +21,26 @@ CREATE TABLE "users" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
+    "password" TEXT NOT NULL,
     "phone" TEXT,
-    "role" "UserRole" NOT NULL DEFAULT 'citizen',
+    "role" "UserRole" NOT NULL DEFAULT 'user',
     "avatar" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "sessions" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "token" TEXT NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "sessions_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -43,6 +56,7 @@ CREATE TABLE "disaster_reports" (
     "images" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "status" "ReportStatus" NOT NULL DEFAULT 'pending',
     "riskLevel" "RiskLevel" NOT NULL DEFAULT 'medium',
+    "urgencyPercentage" DOUBLE PRECISION DEFAULT 0,
     "reportedById" TEXT,
     "reporterName" TEXT,
     "reporterPhone" TEXT,
@@ -67,6 +81,7 @@ CREATE TABLE "road_reports" (
     "images" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "status" "ReportStatus" NOT NULL DEFAULT 'pending',
     "dangerLevel" "DangerLevel" NOT NULL DEFAULT 'moderate',
+    "urgencyPercentage" DOUBLE PRECISION DEFAULT 0,
     "reportedById" TEXT,
     "reporterName" TEXT,
     "reporterPhone" TEXT,
@@ -95,6 +110,12 @@ CREATE TABLE "comments" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "sessions_token_key" ON "sessions"("token");
+
+-- AddForeignKey
+ALTER TABLE "sessions" ADD CONSTRAINT "sessions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "disaster_reports" ADD CONSTRAINT "disaster_reports_reportedById_fkey" FOREIGN KEY ("reportedById") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
