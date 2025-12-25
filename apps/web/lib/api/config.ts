@@ -27,4 +27,3 @@ export const getImageUrl = (imagePath: string): string => {
   }
   return `${API_BASE_URL}${imagePath}`;
 };
-
