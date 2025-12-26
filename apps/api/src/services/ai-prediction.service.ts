@@ -1,16 +1,16 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { envConfig } from '../utils/env';
 import { logger } from '../utils/logger';
-import { potholeService } from './pothole.service';
 
 /**
  * Interface untuk hasil prediksi AI
  */
 export interface AIPredictionResult {
-  urgencyPercentage: number; // 0-100
-  confidence?: number;
+  urgencyPercentage: number | null; // 0-100 atau null jika service mati
+  confidence?: number | null;
   detectedIssues?: string[];
-  recommendedAction?: string;
+  recommendedAction?: string | null; // Recommendation dari ML service
   metadata?: Record<string, any>;
 }
 
@@ -24,37 +24,30 @@ export interface AIPredictionConfig {
 }
 
 /**
- * Mapping kategori pothole ke urgency percentage
- */
-const POTHOLE_URGENCY_MAP: Record<string, number> = {
-  Baik: 10,
-  Sedang: 40,
-  'Rusak Ringan': 60,
-  'Rusak Berat': 90,
-};
-
-/**
  * Service untuk prediksi AI berbagai jenis bencana
  */
 class AIPredictionService {
   private configs: Map<string, AIPredictionConfig> = new Map();
+  private aiServiceUrl: string;
 
   constructor() {
+    this.aiServiceUrl = envConfig.aiServiceUrl;
     this.initializeConfigs();
   }
 
   /**
    * Initialize config untuk berbagai jenis prediksi
+   * Hanya banjir (dari deskripsi) dan jalan (dari gambar) yang menggunakan AI
    */
   private initializeConfigs() {
-    // Config untuk prediksi banjir (text analysis)
+    // Config untuk prediksi banjir (text analysis dari deskripsi)
     this.configs.set('disaster:flood', {
       enabled: true,
       type: 'text',
       handler: this.predictFloodUrgency.bind(this),
     });
 
-    // Config untuk prediksi jalan rusak - semua jenis menggunakan pothole service
+    // Config untuk prediksi jalan rusak (image analysis dari gambar)
     this.configs.set('road:pothole', {
       enabled: true,
       type: 'image',
@@ -81,14 +74,7 @@ class AIPredictionService {
       handler: this.predictRoadUrgency.bind(this),
     });
 
-    // Default untuk jenis bencana lain (tidak menggunakan AI untuk sekarang)
-    this.configs.set('disaster:default', {
-      enabled: true,
-      type: 'text',
-      handler: this.predictDisasterUrgency.bind(this),
-    });
-
-    // Default untuk jenis jalan rusak lain (semua menggunakan pothole service)
+    // Default untuk jenis jalan rusak lain (semua menggunakan image)
     this.configs.set('road:default', {
       enabled: true,
       type: 'image',
@@ -107,24 +93,68 @@ class AIPredictionService {
       return specificConfig;
     }
 
-    // Fallback ke default
-    const defaultKey = `${reportType}:default`;
-    return this.configs.get(defaultKey) || null;
+    // Fallback ke default untuk road
+    if (reportType === 'road') {
+      const defaultKey = `${reportType}:default`;
+      return this.configs.get(defaultKey) || null;
+    }
+
+    // Untuk disaster selain banjir, tidak ada prediksi
+    return null;
   }
 
   /**
-   * Prediksi urgensi untuk banjir menggunakan API eksternal
+   * Check if AI service is available
+   */
+  private async checkAIServiceHealth(): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.aiServiceUrl}/`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(5000), // 5 second timeout
+      });
+      return response.ok;
+    } catch (error) {
+      logger.warn('AI service is not available', {
+        error: error instanceof Error ? error.message : String(error),
+        url: this.aiServiceUrl,
+      });
+      return false;
+    }
+  }
+
+  /**
+   * Prediksi urgensi untuk banjir menggunakan service-ai (dari deskripsi)
    */
   private async predictFloodUrgency(data: {
     description: string;
     title?: string;
     images?: string[];
   }): Promise<AIPredictionResult> {
+    // Check if service is available
+    const isAvailable = await this.checkAIServiceHealth();
+    if (!isAvailable) {
+      logger.warn('AI service not available, skipping flood prediction');
+      return {
+        urgencyPercentage: null,
+        confidence: null,
+        recommendedAction: null,
+      };
+    }
+
     try {
-      const apiUrl = 'https://1026181e1615.ngrok-free.app/api/predict/flood';
+      const apiUrl = `${this.aiServiceUrl}/predict/flood`;
       const comment = `${data.title || ''} ${data.description}`.trim();
 
-      logger.info('Calling external flood prediction API', {
+      if (!comment) {
+        logger.warn('Empty comment for flood prediction');
+        return {
+          urgencyPercentage: null,
+          confidence: null,
+          recommendedAction: null,
+        };
+      }
+
+      logger.info('Calling AI service for flood prediction', {
         apiUrl,
         commentLength: comment.length,
       });
@@ -136,251 +166,225 @@ class AIPredictionService {
         },
         body: JSON.stringify({
           comment: comment,
-          models: 'smv',
         }),
+        signal: AbortSignal.timeout(30000), // 30 second timeout
       });
 
       if (!response.ok) {
-        throw new Error(`API returned status ${response.status}`);
+        throw new Error(`AI service returned status ${response.status}`);
       }
 
       const apiResult = (await response.json()) as {
-        success: boolean;
-        prediction?: {
-          label?: string;
-          confidence?: number;
-          priority?: number;
-          color?: string;
-          icon?: string;
-          model?: string;
+        status?: string;
+        risk_level?: string;
+        confidence?: number;
+        total_severity?: number;
+        severity_percentage?: {
+          rendah?: number;
+          sedang?: number;
+          tinggi?: number;
         };
-        probabilities?: {
-          high?: number;
-          medium?: number;
-          low?: number;
-        };
-        type?: string;
-        timestamp?: string;
+        recommendation?: string;
+        original_comment?: string;
+        cleaned_comment?: string;
       };
 
       logger.info('Flood prediction API response', {
-        success: apiResult.success,
-        label: apiResult.prediction?.label,
-        confidence: apiResult.prediction?.confidence,
+        status: apiResult.status,
+        risk_level: apiResult.risk_level,
+        confidence: apiResult.confidence,
+        total_severity: apiResult.total_severity,
       });
 
-      if (!apiResult.success || !apiResult.prediction) {
-        throw new Error('Invalid API response');
+      if (apiResult.status !== 'success') {
+        throw new Error('AI service returned unsuccessful status');
       }
 
-      // Map priority dari API ke urgency percentage (0-100)
-      // priority: 0 = Rendah, 1 = Sedang, 2 = Tinggi
-      let urgencyScore = 0;
-      const label = apiResult.prediction.label?.toLowerCase() || '';
-      const confidence = apiResult.prediction.confidence || 0;
+      // Map total_severity (0-100) ke urgency percentage
+      // total_severity sudah dalam range 0-100 dari service
+      const urgencyPercentage = apiResult.total_severity ?? null;
 
-      if (label.includes('rendah') || apiResult.prediction.priority === 0) {
-        urgencyScore = 20 + (confidence / 100) * 20; // 20-40
-      } else if (label.includes('sedang') || apiResult.prediction.priority === 1) {
-        urgencyScore = 40 + (confidence / 100) * 30; // 40-70
-      } else if (label.includes('tinggi') || apiResult.prediction.priority === 2) {
-        urgencyScore = 70 + (confidence / 100) * 30; // 70-100
-      } else {
-        // Fallback berdasarkan probabilities
-        const probs = apiResult.probabilities || {};
-        if (probs.high && probs.high > (probs.medium || 0) && probs.high > (probs.low || 0)) {
-          urgencyScore = 70 + (probs.high / 100) * 30;
-        } else if (probs.medium && probs.medium > (probs.low || 0)) {
-          urgencyScore = 40 + (probs.medium / 100) * 30;
-        } else if (probs.low) {
-          urgencyScore = 20 + (probs.low / 100) * 20;
+      // Map risk_level ke detectedIssues
+      const detectedIssues: string[] = [];
+      if (apiResult.risk_level) {
+        detectedIssues.push(`Tingkat risiko: ${apiResult.risk_level}`);
+      }
+      if (apiResult.severity_percentage) {
+        const { rendah, sedang, tinggi } = apiResult.severity_percentage;
+        if (tinggi && tinggi > 50) {
+          detectedIssues.push('Kondisi kritis - perlu penanganan segera');
         }
       }
 
-      // Clamp antara 0-100
-      urgencyScore = Math.max(0, Math.min(100, urgencyScore));
-
-      const detectedIssues: string[] = [];
-      if (apiResult.prediction.label) {
-        detectedIssues.push(`Tingkat urgensi: ${apiResult.prediction.label}`);
-      }
-      if (apiResult.prediction.priority === 2) {
-        detectedIssues.push('Kondisi kritis - perlu penanganan segera');
-      }
-
-      let recommendedAction = 'Monitor kondisi';
-      if (urgencyScore >= 80) {
-        recommendedAction = 'Segera lakukan evakuasi dan penanganan darurat';
-      } else if (urgencyScore >= 60) {
-        recommendedAction = 'Perlu penanganan segera';
-      } else if (urgencyScore >= 40) {
-        recommendedAction = 'Perlu perhatian dan monitoring';
-      }
-
       return {
-        urgencyPercentage: urgencyScore,
-        confidence: confidence / 100, // Convert dari 0-100 ke 0-1
-        detectedIssues,
-        recommendedAction,
+        urgencyPercentage,
+        confidence: apiResult.confidence ? apiResult.confidence / 100 : null, // Convert dari 0-100 ke 0-1
+        detectedIssues: detectedIssues.length > 0 ? detectedIssues : undefined,
+        recommendedAction: apiResult.recommendation || null,
         metadata: {
-          apiResponse: apiResult,
-          label: apiResult.prediction.label,
-          priority: apiResult.prediction.priority,
-          probabilities: apiResult.probabilities,
+          risk_level: apiResult.risk_level,
+          total_severity: apiResult.total_severity,
+          severity_percentage: apiResult.severity_percentage,
+          original_comment: apiResult.original_comment,
+          cleaned_comment: apiResult.cleaned_comment,
         },
       };
     } catch (error) {
-      logger.error('Failed to predict flood urgency from API', {
+      logger.error('Failed to predict flood urgency from AI service', {
         error: error instanceof Error ? error.message : String(error),
+        url: this.aiServiceUrl,
       });
-      // Return default jika error
+      // Return null jika error - tidak akan mengganggu proses pembuatan laporan
       return {
-        urgencyPercentage: 50,
-        confidence: 0,
+        urgencyPercentage: null,
+        confidence: null,
+        recommendedAction: null,
       };
     }
   }
 
   /**
-   * Prediksi urgensi untuk jalan rusak menggunakan pothole service (sama seperti API pothole)
+   * Prediksi urgensi untuk jalan rusak menggunakan service-ai (dari gambar)
    */
   private async predictRoadUrgency(data: {
     description?: string;
     images?: string[];
     type?: string;
   }): Promise<AIPredictionResult> {
+    // Check if service is available
+    const isAvailable = await this.checkAIServiceHealth();
+    if (!isAvailable) {
+      logger.warn('AI service not available, skipping road prediction');
+      return {
+        urgencyPercentage: null,
+        confidence: null,
+        recommendedAction: null,
+      };
+    }
+
+    // Hanya prediksi jika ada gambar
+    if (!data.images || data.images.length === 0) {
+      logger.warn('No images provided for road prediction');
+      return {
+        urgencyPercentage: null,
+        confidence: null,
+        recommendedAction: null,
+      };
+    }
+
     try {
-      let urgencyScore = 50; // Default
-      let detectedIssues: string[] = [];
-      let confidence = 0.5;
+      const apiUrl = `${this.aiServiceUrl}/predict/road`;
+      const firstImagePath = data.images[0];
 
-      // Gunakan pothole service untuk semua jenis jalan rusak jika ada gambar
-      if (data.images && data.images.length > 0) {
-        try {
-          // Ambil gambar pertama untuk prediksi
-          const firstImagePath = data.images[0];
-          if (!firstImagePath) {
-            throw new Error('No image path provided');
-          }
-          // Convert relative path ke absolute path
-          const absoluteImagePath = path.join(
-            process.cwd(),
-            firstImagePath.startsWith('/') ? firstImagePath.slice(1) : firstImagePath
-          );
-
-          if (fs.existsSync(absoluteImagePath)) {
-            const prediction = await potholeService.predictPothole(absoluteImagePath);
-
-            // Map kategori ke urgency percentage
-            urgencyScore = POTHOLE_URGENCY_MAP[prediction.category] || 50;
-            confidence = prediction.confidence;
-
-            detectedIssues.push(`Kondisi jalan: ${prediction.category}`);
-
-            // Tambahkan info dari prediksi
-            if (prediction.allPredictions && prediction.allPredictions.length > 0) {
-              const top3 = prediction.allPredictions.slice(0, 3);
-              detectedIssues.push(
-                `Prediksi: ${top3.map((p) => `${p.category} (${(p.confidence * 100).toFixed(1)}%)`).join(', ')}`
-              );
-            }
-
-            let recommendedAction = 'Monitor kondisi jalan';
-            if (urgencyScore >= 80) {
-              recommendedAction = 'Perlu perbaikan segera - kondisi jalan sangat berbahaya';
-            } else if (urgencyScore >= 60) {
-              recommendedAction = 'Perlu perbaikan dalam waktu dekat';
-            } else if (urgencyScore >= 40) {
-              recommendedAction = 'Perlu perawatan rutin';
-            } else {
-              recommendedAction = 'Kondisi jalan masih baik';
-            }
-
-            return {
-              urgencyPercentage: urgencyScore,
-              confidence,
-              detectedIssues,
-              recommendedAction,
-              metadata: {
-                category: prediction.category,
-                allPredictions: prediction.allPredictions,
-                type: data.type,
-              },
-            };
-          }
-        } catch (error) {
-          logger.error('Failed to use pothole service for prediction', {
-            error: error instanceof Error ? error.message : String(error),
-          });
-        }
+      if (!firstImagePath) {
+        throw new Error('No image path provided');
       }
 
-      // Fallback: analisa berdasarkan text description jika ada
-      if (data.description) {
-        const text = data.description.toLowerCase();
-        const highKeywords = ['parah', 'besar', 'dalam', 'berbahaya', 'kritis'];
-        const mediumKeywords = ['sedang', 'cukup', 'lumayan'];
-        const lowKeywords = ['kecil', 'ringan', 'sedikit'];
+      // Convert relative path ke absolute path
+      const absoluteImagePath = path.join(
+        process.cwd(),
+        firstImagePath.startsWith('/') ? firstImagePath.slice(1) : firstImagePath
+      );
 
-        const highCount = highKeywords.filter((k) => text.includes(k)).length;
-        const mediumCount = mediumKeywords.filter((k) => text.includes(k)).length;
-        const lowCount = lowKeywords.filter((k) => text.includes(k)).length;
+      if (!fs.existsSync(absoluteImagePath)) {
+        throw new Error(`Image file not found: ${absoluteImagePath}`);
+      }
 
-        if (highCount > 0) {
-          urgencyScore = Math.min(90, 70 + highCount * 5);
-        } else if (mediumCount > 0) {
-          urgencyScore = 50 + mediumCount * 5;
-        } else if (lowCount > 0) {
-          urgencyScore = Math.max(20, 50 - lowCount * 5);
+      logger.info('Calling AI service for road prediction', {
+        apiUrl,
+        imagePath: firstImagePath,
+      });
+
+      // Read image file
+      const imageBuffer = fs.readFileSync(absoluteImagePath);
+      const fileName = path.basename(absoluteImagePath);
+
+      // Create FormData menggunakan native FormData (Node.js 18+)
+      const formData = new FormData();
+      const imageBlob = new Blob([imageBuffer]);
+      formData.append('file', imageBlob, fileName);
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        body: formData,
+        signal: AbortSignal.timeout(30000), // 30 second timeout
+      });
+
+      if (!response.ok) {
+        throw new Error(`AI service returned status ${response.status}`);
+      }
+
+      const apiResult = (await response.json()) as {
+        status?: string;
+        prediction_class?: string;
+        confidence?: number;
+        total_damage?: number;
+        severity_percentage?: {
+          baik?: number;
+          rusak_berat?: number;
+          rusak_ringan?: number;
+          sedang?: number;
+        };
+        recommendation?: string;
+      };
+
+      logger.info('Road prediction API response', {
+        status: apiResult.status,
+        prediction_class: apiResult.prediction_class,
+        confidence: apiResult.confidence,
+        total_damage: apiResult.total_damage,
+      });
+
+      if (apiResult.status !== 'success') {
+        throw new Error('AI service returned unsuccessful status');
+      }
+
+      // Map total_damage (0-100) ke urgency percentage
+      // total_damage sudah dalam range 0-100 dari service
+      const urgencyPercentage = apiResult.total_damage ?? null;
+
+      // Map prediction_class ke detectedIssues
+      const detectedIssues: string[] = [];
+      if (apiResult.prediction_class) {
+        detectedIssues.push(`Kondisi jalan: ${apiResult.prediction_class}`);
+      }
+      if (apiResult.severity_percentage) {
+        const { baik, rusak_ringan, sedang, rusak_berat } = apiResult.severity_percentage;
+        if (rusak_berat && rusak_berat > 50) {
+          detectedIssues.push('Kerusakan parah ditemukan');
+        } else if (sedang && sedang > 50) {
+          detectedIssues.push('Kerusakan cukup terlihat');
         }
       }
 
       return {
-        urgencyPercentage: Math.max(0, Math.min(100, urgencyScore)),
-        confidence,
-        detectedIssues,
-        recommendedAction: urgencyScore >= 70 ? 'Perlu penanganan segera' : 'Monitor kondisi',
+        urgencyPercentage,
+        confidence: apiResult.confidence ? apiResult.confidence / 100 : null, // Convert dari 0-100 ke 0-1
+        detectedIssues: detectedIssues.length > 0 ? detectedIssues : undefined,
+        recommendedAction: apiResult.recommendation || null,
+        metadata: {
+          prediction_class: apiResult.prediction_class,
+          total_damage: apiResult.total_damage,
+          severity_percentage: apiResult.severity_percentage,
+        },
       };
     } catch (error) {
-      logger.error('Failed to predict road urgency', {
+      logger.error('Failed to predict road urgency from AI service', {
         error: error instanceof Error ? error.message : String(error),
+        url: this.aiServiceUrl,
       });
+      // Return null jika error - tidak akan mengganggu proses pembuatan laporan
       return {
-        urgencyPercentage: 50,
-        confidence: 0,
+        urgencyPercentage: null,
+        confidence: null,
+        recommendedAction: null,
       };
     }
   }
 
   /**
-   * Prediksi urgensi untuk bencana umum (selain banjir - tidak menggunakan AI untuk sekarang)
-   */
-  private async predictDisasterUrgency(data: {
-    description: string;
-    title?: string;
-    type?: string;
-    images?: string[];
-  }): Promise<AIPredictionResult> {
-    // Untuk bencana selain banjir, tidak menggunakan AI prediction
-    // Return null/0 karena API machine learning belum siap
-    logger.info('Disaster type is not flood, skipping AI prediction', {
-      type: data.type,
-    });
-
-    return {
-      urgencyPercentage: 0,
-      confidence: 0,
-      detectedIssues: [],
-      recommendedAction: 'Menunggu analisa lebih lanjut',
-      metadata: {
-        reason: 'AI prediction not available for this disaster type',
-        type: data.type,
-      },
-    };
-  }
-
-  /**
    * Predict urgency untuk report
+   * Hanya untuk banjir (disaster:flood) dan jalan (road:*)
    */
   async predictUrgency(
     reportType: 'disaster' | 'road',
@@ -395,11 +399,13 @@ class AIPredictionService {
     try {
       const config = this.getConfig(reportType, type);
 
+      // Jika tidak ada config, berarti tidak perlu prediksi
       if (!config || !config.enabled) {
-        logger.warn(`AI prediction not configured for ${reportType}:${type}`);
+        logger.info(`AI prediction not configured for ${reportType}:${type}, skipping`);
         return {
-          urgencyPercentage: 50,
-          confidence: 0,
+          urgencyPercentage: null,
+          confidence: null,
+          recommendedAction: null,
         };
       }
 
@@ -414,6 +420,7 @@ class AIPredictionService {
         type,
         urgencyPercentage: result.urgencyPercentage,
         confidence: result.confidence,
+        hasRecommendation: !!result.recommendedAction,
       });
 
       return result;
@@ -423,10 +430,11 @@ class AIPredictionService {
         reportType,
         type,
       });
-      // Return default jika error
+      // Return null jika error - tidak akan mengganggu proses pembuatan laporan
       return {
-        urgencyPercentage: 50,
-        confidence: 0,
+        urgencyPercentage: null,
+        confidence: null,
+        recommendedAction: null,
       };
     }
   }

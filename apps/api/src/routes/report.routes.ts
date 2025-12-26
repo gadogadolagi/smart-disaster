@@ -380,12 +380,7 @@ router.put('/road/:id', authenticate, authorize('government'), reportController.
  *       404:
  *         description: Report not found
  */
-router.delete(
-  '/road/:id',
-  authenticate,
-  authorize('admin'),
-  reportController.deleteRoadReport
-);
+router.delete('/road/:id', authenticate, authorize('admin'), reportController.deleteRoadReport);
 
 /**
  * @swagger

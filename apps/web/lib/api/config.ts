@@ -17,7 +17,6 @@ export const API_ENDPOINTS = {
       update: (id: string) => `${API_BASE_URL}/api/reports/road/${id}`,
       delete: (id: string) => `${API_BASE_URL}/api/reports/road/${id}`,
     },
-    myReports: `${API_BASE_URL}/api/reports/my-reports`,
   },
   assignments: {
     petugas: `${API_BASE_URL}/api/assignments/petugas`,

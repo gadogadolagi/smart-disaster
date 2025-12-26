@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import {
-  healthCheck,
   detailedHealthCheck,
-  readinessCheck,
+  healthCheck,
   livenessCheck,
+  readinessCheck,
 } from '../controllers/health.controller';
 
-const router = Router();
+const router: Router = Router();
 
 /**
  * @swagger
@@ -61,4 +61,3 @@ router.get('/ready', readinessCheck);
 router.get('/live', livenessCheck);
 
 export default router;
-

@@ -1,22 +1,12 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { ReactNode, useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Navbar } from './Navbar';
-import {
-  LayoutDashboard,
-  Users,
-  FileText,
-  Settings,
-  LogOut,
-  UserCircle,
-  Shield,
-} from 'lucide-react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { FileText, LayoutDashboard, LogOut, Shield, UserCircle, Users } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { ReactNode, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 interface AdminLayoutProps {
@@ -122,4 +112,3 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     </div>
   );
 }
-

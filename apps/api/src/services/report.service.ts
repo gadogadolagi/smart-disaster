@@ -103,34 +103,49 @@ export class ReportService {
   }
 
   async createDisasterReport(data: any, imagePaths: string[]) {
-    // Run AI prediction untuk mendapatkan urgency percentage
-    let urgencyPercentage = 0;
-    let aiMetadata: any = {};
+    // Hanya prediksi untuk banjir (flood) dari deskripsi
+    let urgencyPercentage: number | null = null;
+    let aiRecommendedAction: string | null = null;
 
-    try {
-      const aiResult = await aiPredictionService.predictUrgency('disaster', data.type, {
-        description: data.description,
-        title: data.title,
-        images: imagePaths,
-      });
+    // Hanya jalankan prediksi jika type adalah flood
+    if (data.type === 'flood') {
+      try {
+        const aiResult = await aiPredictionService.predictUrgency('disaster', data.type, {
+          description: data.description,
+          title: data.title,
+          images: imagePaths,
+        });
 
-      urgencyPercentage = aiResult.urgencyPercentage;
-      aiMetadata = {
-        confidence: aiResult.confidence,
-        detectedIssues: aiResult.detectedIssues,
-        recommendedAction: aiResult.recommendedAction,
-        metadata: aiResult.metadata,
-      };
+        urgencyPercentage = aiResult.urgencyPercentage ?? null;
+        aiRecommendedAction = aiResult.recommendedAction ?? null;
 
-      logger.info(`AI prediction for disaster report: ${urgencyPercentage}%`, {
-        type: data.type,
-        confidence: aiResult.confidence,
-      });
-    } catch (error) {
-      logger.error('Failed to run AI prediction for disaster report', {
-        error: error instanceof Error ? error.message : String(error),
-      });
-      // Continue dengan default value jika AI prediction gagal
+        if (urgencyPercentage !== null) {
+          logger.info(`AI prediction for flood report: ${urgencyPercentage}%`, {
+            type: data.type,
+            confidence: aiResult.confidence,
+            hasRecommendation: !!aiRecommendedAction,
+          });
+        } else {
+          logger.warn('AI prediction returned null for flood report (service may be down)');
+        }
+      } catch (error) {
+        logger.error('Failed to run AI prediction for flood report', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        // Set null jika error - tidak akan mengganggu proses pembuatan laporan
+        urgencyPercentage = null;
+        aiRecommendedAction = null;
+      }
+    } else {
+      logger.info(`Skipping AI prediction for disaster type: ${data.type} (only flood uses AI)`);
+    }
+
+    // Build notes dengan recommendation dari AI jika ada
+    let notes = data.notes || null;
+    if (aiRecommendedAction) {
+      notes = notes
+        ? `${notes}\n\n[Rekomendasi AI]: ${aiRecommendedAction}`
+        : `[Rekomendasi AI]: ${aiRecommendedAction}`;
     }
 
     const report = await prisma.disasterReport.create({
@@ -144,10 +159,11 @@ export class ReportService {
         district: data.district,
         images: imagePaths,
         riskLevel: data.riskLevel || 'medium',
-        urgencyPercentage: urgencyPercentage,
+        urgencyPercentage: urgencyPercentage ?? 0, // Default 0 jika null
         reportedById: data.reportedById || null,
         reporterName: data.reportedById ? null : data.reporterName || null,
         reporterPhone: data.reportedById ? null : data.reporterPhone || null,
+        notes: notes,
       },
       select: {
         id: true,
@@ -207,9 +223,7 @@ export class ReportService {
         reporterEmail = reporter?.email;
       }
 
-      const reportUrl = process.env.APP_URL
-        ? `${process.env.APP_URL}/monitoring`
-        : undefined;
+      const reportUrl = process.env.APP_URL ? `${process.env.APP_URL}/monitoring` : undefined;
 
       await emailService.sendNewReportNotification({
         reportId: report.id,
@@ -397,34 +411,48 @@ export class ReportService {
   }
 
   async createRoadReport(data: any, imagePaths: string[]) {
-    // Run AI prediction untuk mendapatkan urgency percentage
-    let urgencyPercentage = 0;
+    // Prediksi untuk semua jenis jalan rusak dari gambar
+    let urgencyPercentage: number | null = null;
     let aiDetectedIssues: string[] = [];
     let aiConfidence: number | null = null;
     let aiRecommendedAction: string | null = null;
 
-    try {
-      const aiResult = await aiPredictionService.predictUrgency('road', data.type, {
-        description: data.description,
-        title: data.title,
-        images: imagePaths,
-        type: data.type,
-      });
+    // Hanya jalankan prediksi jika ada gambar
+    if (imagePaths && imagePaths.length > 0) {
+      try {
+        const aiResult = await aiPredictionService.predictUrgency('road', data.type, {
+          description: data.description,
+          title: data.title,
+          images: imagePaths,
+          type: data.type,
+        });
 
-      urgencyPercentage = aiResult.urgencyPercentage;
-      aiDetectedIssues = aiResult.detectedIssues || [];
-      aiConfidence = aiResult.confidence || null;
-      aiRecommendedAction = aiResult.recommendedAction || null;
+        urgencyPercentage = aiResult.urgencyPercentage ?? null;
+        aiDetectedIssues = aiResult.detectedIssues || [];
+        aiConfidence = aiResult.confidence ? aiResult.confidence * 100 : null; // Convert dari 0-1 ke 0-100
+        aiRecommendedAction = aiResult.recommendedAction ?? null;
 
-      logger.info(`AI prediction for road report: ${urgencyPercentage}%`, {
-        type: data.type,
-        confidence: aiResult.confidence,
-      });
-    } catch (error) {
-      logger.error('Failed to run AI prediction for road report', {
-        error: error instanceof Error ? error.message : String(error),
-      });
-      // Continue dengan default value jika AI prediction gagal
+        if (urgencyPercentage !== null) {
+          logger.info(`AI prediction for road report: ${urgencyPercentage}%`, {
+            type: data.type,
+            confidence: aiConfidence,
+            hasRecommendation: !!aiRecommendedAction,
+          });
+        } else {
+          logger.warn('AI prediction returned null for road report (service may be down)');
+        }
+      } catch (error) {
+        logger.error('Failed to run AI prediction for road report', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        // Set null jika error - tidak akan mengganggu proses pembuatan laporan
+        urgencyPercentage = null;
+        aiDetectedIssues = [];
+        aiConfidence = null;
+        aiRecommendedAction = null;
+      }
+    } else {
+      logger.info('Skipping AI prediction for road report (no images provided)');
     }
 
     const report = await prisma.roadReport.create({
@@ -438,7 +466,7 @@ export class ReportService {
         district: data.district,
         images: imagePaths,
         dangerLevel: data.dangerLevel || 'moderate',
-        urgencyPercentage: urgencyPercentage,
+        urgencyPercentage: urgencyPercentage ?? 0, // Default 0 jika null
         reportedById: data.reportedById || null,
         reporterName: data.reportedById ? null : data.reporterName || null,
         reporterPhone: data.reportedById ? null : data.reporterPhone || null,
