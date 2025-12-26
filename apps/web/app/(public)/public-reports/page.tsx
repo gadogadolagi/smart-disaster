@@ -9,13 +9,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -32,7 +25,6 @@ import { API_ENDPOINTS, getImageUrl } from '@/lib/api/config';
 import { DisasterReport, ReportComment, RoadReport } from '@/types';
 import {
   AlertTriangle,
-  Brain,
   Clock,
   Construction,
   Eye,
@@ -127,7 +119,7 @@ function CommentSection({
             <div key={comment.id} className="p-3 rounded-lg bg-muted/50">
               <div className="flex items-center gap-2 mb-2">
                 <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  {comment.author.role === 'government' ? (
+                  {comment.author.role === 'admin' ? (
                     <Shield className="h-4 w-4 text-primary" />
                   ) : (
                     <User className="h-4 w-4 text-muted-foreground" />
@@ -136,7 +128,7 @@ function CommentSection({
                 <div className="flex-1">
                   <p className="text-sm font-medium flex items-center gap-2">
                     {comment.author.name}
-                    {comment.author.role === 'government' && (
+                    {comment.author.role === 'admin' && (
                       <Badge variant="secondary" className="text-xs">
                         Pemerintah
                       </Badge>
@@ -164,66 +156,66 @@ function DisasterReportCard({ report }: { report: DisasterReport }) {
       className="cursor-pointer hover:shadow-md transition-all hover:border-primary/50"
       onClick={() => router.push(`/public-reports/disaster/${report.id}`)}
     >
-          <CardHeader className="pb-2">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1">
-                <CardTitle className="text-base line-clamp-1">{report.title}</CardTitle>
-                <CardDescription className="flex items-center gap-1 mt-1">
-                  <MapPin className="h-3 w-3" />
-                  {report.location.district}
-                </CardDescription>
-              </div>
-              <StatusBadge status={report.status} />
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1">
+            <CardTitle className="text-base line-clamp-1">{report.title}</CardTitle>
+            <CardDescription className="flex items-center gap-1 mt-1">
+              <MapPin className="h-3 w-3" />
+              {report.location.district}
+            </CardDescription>
+          </div>
+          <StatusBadge status={report.status} />
+        </div>
+      </CardHeader>
+      <CardContent>
+        {report.images && report.images.length > 0 && (
+          <div className="mb-3 rounded-lg overflow-hidden">
+            <img
+              src={getImageUrl(report.images[0] || '')}
+              alt={report.title}
+              className="w-full h-32 object-cover"
+            />
+          </div>
+        )}
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{report.description}</p>
+        {report.urgencyPercentage !== undefined && report.urgencyPercentage > 0 && (
+          <div className="mb-3 p-2 rounded-lg bg-accent/50 border">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-medium flex items-center gap-1">
+                <TrendingUp className="h-3 w-3" />
+                Tingkat Urgensi
+              </span>
+              <span className="text-xs font-bold">{report.urgencyPercentage.toFixed(1)}%</span>
             </div>
-          </CardHeader>
-          <CardContent>
-            {report.images && report.images.length > 0 && (
-              <div className="mb-3 rounded-lg overflow-hidden">
-                <img
-                  src={getImageUrl(report.images[0] || '')}
-                  alt={report.title}
-                  className="w-full h-32 object-cover"
-                />
-              </div>
-            )}
-            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{report.description}</p>
-            {report.urgencyPercentage !== undefined && report.urgencyPercentage > 0 && (
-              <div className="mb-3 p-2 rounded-lg bg-accent/50 border">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3" />
-                    Tingkat Urgensi
-                  </span>
-                  <span className="text-xs font-bold">{report.urgencyPercentage.toFixed(1)}%</span>
-                </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full transition-all ${
-                      report.urgencyPercentage >= 80
-                        ? 'bg-destructive'
-                        : report.urgencyPercentage >= 60
-                          ? 'bg-orange-500'
-                          : report.urgencyPercentage >= 40
-                            ? 'bg-yellow-500'
-                            : 'bg-green-500'
-                    }`}
-                    style={{ width: `${Math.min(100, report.urgencyPercentage)}%` }}
-                  />
-                </div>
-              </div>
-            )}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <DisasterTypeBadge type={report.type} />
-                <RiskLevelBadge level={report.riskLevel} />
-              </div>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3" />
-                {new Date(report.createdAt).toLocaleDateString('id-ID')}
-              </div>
+            <div className="w-full bg-muted rounded-full h-2">
+              <div
+                className={`h-2 rounded-full transition-all ${
+                  report.urgencyPercentage >= 80
+                    ? 'bg-destructive'
+                    : report.urgencyPercentage >= 60
+                      ? 'bg-orange-500'
+                      : report.urgencyPercentage >= 40
+                        ? 'bg-yellow-500'
+                        : 'bg-green-500'
+                }`}
+                style={{ width: `${Math.min(100, report.urgencyPercentage)}%` }}
+              />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        )}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <DisasterTypeBadge type={report.type} />
+            <RiskLevelBadge level={report.riskLevel} />
+          </div>
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Clock className="h-3 w-3" />
+            {new Date(report.createdAt).toLocaleDateString('id-ID')}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -235,66 +227,66 @@ function RoadReportCard({ report }: { report: RoadReport }) {
       className="cursor-pointer hover:shadow-md transition-all hover:border-primary/50"
       onClick={() => router.push(`/public-reports/road/${report.id}`)}
     >
-          <CardHeader className="pb-2">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1">
-                <CardTitle className="text-base line-clamp-1">{report.title}</CardTitle>
-                <CardDescription className="flex items-center gap-1 mt-1">
-                  <MapPin className="h-3 w-3" />
-                  {report.location.district}
-                </CardDescription>
-              </div>
-              <StatusBadge status={report.status} />
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1">
+            <CardTitle className="text-base line-clamp-1">{report.title}</CardTitle>
+            <CardDescription className="flex items-center gap-1 mt-1">
+              <MapPin className="h-3 w-3" />
+              {report.location.district}
+            </CardDescription>
+          </div>
+          <StatusBadge status={report.status} />
+        </div>
+      </CardHeader>
+      <CardContent>
+        {report.images && report.images.length > 0 && (
+          <div className="mb-3 rounded-lg overflow-hidden">
+            <img
+              src={getImageUrl(report.images[0] || '')}
+              alt={report.title}
+              className="w-full h-32 object-cover"
+            />
+          </div>
+        )}
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{report.description}</p>
+        {report.urgencyPercentage !== undefined && report.urgencyPercentage > 0 && (
+          <div className="mb-3 p-2 rounded-lg bg-accent/50 border">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-medium flex items-center gap-1">
+                <TrendingUp className="h-3 w-3" />
+                Tingkat Urgensi
+              </span>
+              <span className="text-xs font-bold">{report.urgencyPercentage.toFixed(1)}%</span>
             </div>
-          </CardHeader>
-          <CardContent>
-            {report.images && report.images.length > 0 && (
-              <div className="mb-3 rounded-lg overflow-hidden">
-                <img
-                  src={getImageUrl(report.images[0] || '')}
-                  alt={report.title}
-                  className="w-full h-32 object-cover"
-                />
-              </div>
-            )}
-            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{report.description}</p>
-            {report.urgencyPercentage !== undefined && report.urgencyPercentage > 0 && (
-              <div className="mb-3 p-2 rounded-lg bg-accent/50 border">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3" />
-                    Tingkat Urgensi
-                  </span>
-                  <span className="text-xs font-bold">{report.urgencyPercentage.toFixed(1)}%</span>
-                </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full transition-all ${
-                      report.urgencyPercentage >= 80
-                        ? 'bg-destructive'
-                        : report.urgencyPercentage >= 60
-                          ? 'bg-orange-500'
-                          : report.urgencyPercentage >= 40
-                            ? 'bg-yellow-500'
-                            : 'bg-green-500'
-                    }`}
-                    style={{ width: `${Math.min(100, report.urgencyPercentage)}%` }}
-                  />
-                </div>
-              </div>
-            )}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <RoadIssueTypeBadge type={report.type} />
-                <DangerLevelBadge level={report.dangerLevel} />
-              </div>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3" />
-                {new Date(report.createdAt).toLocaleDateString('id-ID')}
-              </div>
+            <div className="w-full bg-muted rounded-full h-2">
+              <div
+                className={`h-2 rounded-full transition-all ${
+                  report.urgencyPercentage >= 80
+                    ? 'bg-destructive'
+                    : report.urgencyPercentage >= 60
+                      ? 'bg-orange-500'
+                      : report.urgencyPercentage >= 40
+                        ? 'bg-yellow-500'
+                        : 'bg-green-500'
+                }`}
+                style={{ width: `${Math.min(100, report.urgencyPercentage)}%` }}
+              />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        )}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <RoadIssueTypeBadge type={report.type} />
+            <DangerLevelBadge level={report.dangerLevel} />
+          </div>
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Clock className="h-3 w-3" />
+            {new Date(report.createdAt).toLocaleDateString('id-ID')}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -456,12 +448,9 @@ export default function PublicReports() {
 
       const matchesRiskLevel =
         riskLevelFilter === 'all' ||
-        (report.type === 'disaster' &&
-          (report as DisasterReport).riskLevel === riskLevelFilter);
+        (report.type === 'disaster' && (report as DisasterReport).riskLevel === riskLevelFilter);
 
-      return (
-        matchesSearch && matchesStatus && matchesType && matchesDistrict && matchesRiskLevel
-      );
+      return matchesSearch && matchesStatus && matchesType && matchesDistrict && matchesRiskLevel;
     });
   };
 

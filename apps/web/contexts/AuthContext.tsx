@@ -309,7 +309,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string, role: UserRole): Promise<boolean> => {
     setIsLoading(true);
-    console.log('login', email, password, role);
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/login`, {

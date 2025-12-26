@@ -6,7 +6,6 @@ import { cn } from '@/lib/utils';
 import {
   Activity,
   BarChart3,
-  FileText,
   LayoutDashboard,
   LogOut,
   Shield,
@@ -23,11 +22,11 @@ interface AdminLayoutProps {
 }
 
 const adminNavItems = [
-  { href: '/dashboard-admin', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/dashboard-admin/users', label: 'Manajemen User', icon: Users },
-  { href: '/dashboard-admin', label: 'Manajemen Laporan', icon: FileText },
-  { href: '/dashboard-admin/stats', label: 'Statistik', icon: BarChart3 },
-  { href: '/dashboard-admin/activities', label: 'Log Aktivitas', icon: Activity },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard/users', label: 'Manajemen User', icon: Users },
+  // { href: '/dashboard', label: 'Manajemen Laporan', icon: FileText },
+  { href: '/dashboard/stats', label: 'Statistik', icon: BarChart3 },
+  { href: '/dashboard/activities', label: 'Log Aktivitas', icon: Activity },
 ];
 
 export function AdminLayout({ children }: AdminLayoutProps) {
@@ -70,7 +69,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link href="/admin/dashboard" className="flex items-center gap-2">
+            <Link href="/dashboard" className="flex items-center gap-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
                 <Shield className="h-5 w-5 text-primary-foreground" />
               </div>

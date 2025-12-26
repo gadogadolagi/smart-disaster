@@ -1,4 +1,3 @@
-import { MainLayout } from '@/components/layout';
 import { Toaster } from '@/components/ui/sonner';
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';

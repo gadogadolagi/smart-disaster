@@ -1,19 +1,13 @@
 'use client';
 
-import {
-  DangerLevelBadge,
-  DisasterTypeBadge,
-  RiskLevelBadge,
-  StatusBadge,
-} from '@/components/shared';
+import { DisasterTypeBadge, RiskLevelBadge, StatusBadge } from '@/components/shared';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { API_ENDPOINTS, getImageUrl } from '@/lib/api/config';
 import { AlertTriangle, ArrowLeft, Brain, Clock, MapPin, Shield, TrendingUp } from 'lucide-react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 interface DisasterReport {
@@ -100,6 +94,8 @@ function CommentSection({
 }
 
 export default function DisasterReportDetailPage({ params }: { params: { id: string } }) {
+  const { id } = use(params);
+
   const router = useRouter();
   const [report, setReport] = useState<DisasterReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -107,7 +103,7 @@ export default function DisasterReportDetailPage({ params }: { params: { id: str
   useEffect(() => {
     const loadReport = async () => {
       try {
-        const res = await fetch(API_ENDPOINTS.reports.disaster.get(params.id));
+        const res = await fetch(API_ENDPOINTS.reports.disaster.get(id));
         const data = await res.json();
 
         if (res.ok && data.success) {
@@ -125,7 +121,7 @@ export default function DisasterReportDetailPage({ params }: { params: { id: str
     };
 
     loadReport();
-  }, [params.id, router]);
+  }, [id, router]);
 
   if (isLoading) {
     return (
@@ -303,5 +299,3 @@ export default function DisasterReportDetailPage({ params }: { params: { id: str
     </div>
   );
 }
-
-

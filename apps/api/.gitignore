@@ -10,8 +10,9 @@ dist/
 .env.*.local
 
 # Uploads
-uploads/
+uploads/*.{jpg,jpeg,png,webp,gif}
 !uploads/.gitkeep
+!uploads/examples/*
 
 # Logs
 logs/
