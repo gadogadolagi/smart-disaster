@@ -34,6 +34,15 @@ const envSchema = z.object({
   MAX_FILE_SIZE: z.string().default('5242880'), // 5MB
   MAX_FILES: z.string().default('5'),
   UPLOAD_DIR: z.string().default('uploads'),
+
+  // Email configuration (optional)
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.string().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASSWORD: z.string().optional(),
+  SMTP_FROM: z.string().optional(),
+  ADMIN_EMAIL: z.string().optional(),
+  APP_URL: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -77,4 +86,7 @@ export const envConfig = {
   maxFiles: parseInt(env.MAX_FILES, 10),
 
   allowedOrigins: env.ALLOWED_ORIGINS?.split(',').map((origin) => origin.trim()) || [],
+
+  // Email configuration
+  emailEnabled: !!(env.SMTP_HOST && env.SMTP_PORT && env.SMTP_USER && env.SMTP_PASSWORD),
 };

@@ -1,451 +1,926 @@
 'use client';
-import { Badge } from '@/components/ui/badge';
+
+import {
+  DangerLevelBadge,
+  DisasterTypeBadge,
+  RiskLevelBadge,
+  RoadIssueTypeBadge,
+  StatusBadge,
+} from '@/components/shared';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/contexts/AuthContext';
+import { API_BASE_URL, API_ENDPOINTS, apiCall } from '@/lib/api/config';
+import { ReportStatus } from '@/types';
 import {
-  mockDashboardStats,
-  mockFirePredictions,
-  mockFloodRiskAreas,
-  mockSensors,
-  mockWeatherData,
-} from '@/data/mockData';
-import {
-  Activity,
   AlertTriangle,
-  Cloud,
-  CloudLightning,
-  CloudRain,
+  Calendar,
+  CheckCircle,
+  Clock,
   Construction,
-  Droplets,
-  Eye,
   FileText,
-  Flame,
-  Gauge,
   MapPin,
-  Sun,
-  Thermometer,
-  Wind,
+  User as UserIcon,
+  X,
 } from 'lucide-react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
-const weatherIcons = {
-  sunny: Sun,
-  cloudy: Cloud,
-  rainy: CloudRain,
-  stormy: CloudLightning,
-} as const;
+interface AssignedReport {
+  id: string;
+  type: 'disaster' | 'road';
+  title: string;
+  description: string;
+  address: string;
+  district: string;
+  images: string[];
+  status: ReportStatus;
+  riskLevel?: string;
+  dangerLevel?: string;
+  reportedBy?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
 
-const weatherLabels = {
-  sunny: 'Cerah',
-  cloudy: 'Berawan',
-  rainy: 'Hujan',
-  stormy: 'Badai',
-} as const;
+interface Activity {
+  id: string;
+  activityType: string;
+  description: string;
+  images: string[];
+  createdBy: {
+    id: string;
+    name: string;
+  };
+  createdAt: string;
+}
 
-type WeatherCondition = keyof typeof weatherIcons;
+export default function MonitoringPage() {
+  const { user, isAuthenticated, getAccessToken, isLoading: authLoading } = useAuth();
+  const router = useRouter();
 
-export default function PublicMonitoring() {
-  const forecast = Array.isArray(mockWeatherData?.forecast) ? mockWeatherData.forecast : [];
+  const [mounted, setMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [disasterReports, setDisasterReports] = useState<AssignedReport[]>([]);
+  const [roadReports, setRoadReports] = useState<AssignedReport[]>([]);
+  const [selectedReport, setSelectedReport] = useState<AssignedReport | null>(null);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [activityDialogOpen, setActivityDialogOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  const currentCondition =
-    mockWeatherData?.condition && mockWeatherData.condition in weatherIcons
-      ? (mockWeatherData.condition as keyof typeof weatherIcons)
-      : 'cloudy';
+  // Activity form state
+  const [activityForm, setActivityForm] = useState({
+    description: '',
+    activityType: 'status_changed',
+    newStatus: '',
+    images: [] as File[],
+  });
 
-  const WeatherIcon = weatherIcons[currentCondition];
+  useEffect(() => setMounted(true), []);
 
-  // ✅ TAMBAHAN: normalisasi sensors jadi array
-  const sensors = Array.isArray(mockSensors)
-    ? mockSensors
-    : Array.isArray((mockSensors as any)?.data)
-      ? (mockSensors as any).data
-      : [];
+  useEffect(() => {
+    if (!mounted) return;
 
-  // ✅ TAMBAHAN: normalisasi predictions & flood areas juga sekalian biar aman
-  const firePredictions = Array.isArray(mockFirePredictions)
-    ? mockFirePredictions
-    : Array.isArray((mockFirePredictions as any)?.data)
-      ? (mockFirePredictions as any).data
-      : [];
+    // Wait for auth to finish loading
+    if (authLoading) return;
 
-  const floodAreas = Array.isArray(mockFloodRiskAreas)
-    ? mockFloodRiskAreas
-    : Array.isArray((mockFloodRiskAreas as any)?.data)
-      ? (mockFloodRiskAreas as any).data
-      : [];
+    // Check if user is authenticated and is petugas
+    if (!isAuthenticated || !user) {
+      router.replace('/login');
+      return;
+    }
+
+    if (user.role !== 'petugas') {
+      toast.error('Akses ditolak. Hanya petugas yang dapat mengakses halaman ini.');
+      router.replace('/');
+      return;
+    }
+
+    loadAssignedReports();
+  }, [mounted, authLoading, isAuthenticated, user, router]);
+
+  const loadAssignedReports = async () => {
+    setIsLoading(true);
+    try {
+      const res = await apiCall(API_ENDPOINTS.assignments.myReports);
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setDisasterReports(data.data.disasterReports || []);
+        setRoadReports(data.data.roadReports || []);
+      } else {
+        throw new Error(data.message || 'Gagal memuat laporan');
+      }
+    } catch (error: any) {
+      console.error('Error loading assigned reports:', error);
+      toast.error(error.message || 'Gagal memuat laporan');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadReportActivities = async (reportId: string, reportType: 'disaster' | 'road') => {
+    try {
+      const res = await apiCall(
+        `${API_ENDPOINTS.activities.getReport(reportId)}?reportType=${reportType}`
+      );
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setActivities(data.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading activities:', error);
+    }
+  };
+
+  const handleStatusChange = async (
+    id: string,
+    type: 'disaster' | 'road',
+    status: ReportStatus
+  ) => {
+    try {
+      const endpoint =
+        type === 'disaster'
+          ? API_ENDPOINTS.reports.disaster.update(id)
+          : API_ENDPOINTS.reports.road.update(id);
+
+      const res = await apiCall(endpoint, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        toast.success('Status diperbarui');
+        loadAssignedReports();
+      } else {
+        throw new Error(data.message || 'Gagal memperbarui status');
+      }
+    } catch (error: any) {
+      console.error('Error updating status:', error);
+      toast.error(error.message || 'Gagal memperbarui status');
+    }
+  };
+
+  const handleCreateActivity = async () => {
+    if (!selectedReport) return;
+
+    if (!activityForm.description.trim()) {
+      toast.error('Deskripsi aktivitas wajib diisi');
+      return;
+    }
+
+    if (activityForm.activityType === 'status_changed' && !activityForm.newStatus) {
+      toast.error('Status baru wajib dipilih');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('reportType', selectedReport.type);
+      formData.append('description', activityForm.description);
+      formData.append('activityType', activityForm.activityType);
+
+      if (activityForm.activityType === 'status_changed' && activityForm.newStatus) {
+        formData.append('newStatus', activityForm.newStatus);
+      }
+
+      activityForm.images.forEach((file) => {
+        formData.append('images', file);
+      });
+
+      const accessToken = getAccessToken();
+      if (!accessToken) {
+        toast.error('Sesi telah berakhir, silakan login kembali');
+        router.push('/login');
+        return;
+      }
+
+      const res = await fetch(API_ENDPOINTS.activities.create(selectedReport.id), {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        toast.success('Aktivitas berhasil ditambahkan');
+        setActivityDialogOpen(false);
+        setActivityForm({
+          description: '',
+          activityType: 'status_changed',
+          newStatus: '',
+          images: [],
+        });
+        loadAssignedReports();
+        if (selectedReport) {
+          loadReportActivities(selectedReport.id, selectedReport.type);
+        }
+      } else {
+        throw new Error(data.message || 'Gagal menambahkan aktivitas');
+      }
+    } catch (error: any) {
+      console.error('Error creating activity:', error);
+      toast.error(error.message || 'Gagal menambahkan aktivitas');
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      const filesToAdd = files.slice(0, 5 - activityForm.images.length);
+      setActivityForm({
+        ...activityForm,
+        images: [...activityForm.images, ...filesToAdd],
+      });
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setActivityForm({
+      ...activityForm,
+      images: activityForm.images.filter((_, i) => i !== index),
+    });
+  };
+
+  const openActivityDialog = (report: AssignedReport) => {
+    setSelectedReport(report);
+    setActivityDialogOpen(true);
+    loadReportActivities(report.id, report.type);
+  };
+
+  const filteredDisasterReports = disasterReports.filter((r) => {
+    return statusFilter === 'all' || r.status === statusFilter;
+  });
+
+  const filteredRoadReports = roadReports.filter((r) => {
+    return statusFilter === 'all' || r.status === statusFilter;
+  });
+
+  if (!mounted || authLoading) {
+    return (
+      <div className="container py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <p>Memuat...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !user || user.role !== 'petugas') {
+    return null;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="container py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <p>Memuat data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="container py-8 space-y-8">
-      {/* Header */}
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold tracking-tight">
-          Monitoring <span className="text-primary">Publik</span>
-        </h1>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          Pantau kondisi cuaca, sensor IoT, dan area berisiko secara real-time. Informasi ini
-          diperbarui secara berkala untuk keselamatan warga.
-        </p>
+    <div className="container py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Monitoring Laporan</h1>
+        <p className="text-muted-foreground">Kelola laporan yang ditugaskan kepada Anda</p>
       </div>
 
-      {/* Current Weather Card */}
-      <Card className="bg-linear-to-br from-primary/10 to-primary/5 border-primary/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <WeatherIcon className="h-6 w-6" />
-            Cuaca Saat Ini - Jakarta
-          </CardTitle>
-          <CardDescription>Data diperbarui: {new Date().toLocaleString('id-ID')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="text-center p-4 rounded-lg bg-background/50">
-              <Thermometer className="h-8 w-8 mx-auto mb-2 text-emergency-fire" />
-              <p className="text-3xl font-bold">{mockWeatherData?.temperature ?? '-'}°C</p>
-              <p className="text-sm text-muted-foreground">Suhu</p>
-            </div>
-            <div className="text-center p-4 rounded-lg bg-background/50">
-              <Droplets className="h-8 w-8 mx-auto mb-2 text-emergency-flood" />
-              <p className="text-3xl font-bold">{mockWeatherData?.humidity ?? '-'}%</p>
-              <p className="text-sm text-muted-foreground">Kelembaban</p>
-            </div>
-            <div className="text-center p-4 rounded-lg bg-background/50">
-              <Wind className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-3xl font-bold">{mockWeatherData?.windSpeed ?? '-'} km/h</p>
-              <p className="text-sm text-muted-foreground">Kecepatan Angin</p>
-            </div>
-            <div className="text-center p-4 rounded-lg bg-background/50">
-              <CloudRain className="h-8 w-8 mx-auto mb-2 text-primary" />
-              <p className="text-3xl font-bold">{mockWeatherData?.rainfall ?? '-'} mm</p>
-              <p className="text-sm text-muted-foreground">Curah Hujan</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Weather Forecast */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Prakiraan Cuaca 5 Hari</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {forecast.length === 0 ? (
-              <div className="col-span-2 md:col-span-5 text-center text-sm text-muted-foreground py-6">
-                Prakiraan cuaca belum tersedia.
-              </div>
-            ) : (
-              forecast.map((day: any, index: number) => {
-                const dayCondition: WeatherCondition =
-                  day?.condition && day.condition in weatherIcons
-                    ? (day.condition as WeatherCondition)
-                    : 'cloudy';
-
-                const DayIcon = weatherIcons[dayCondition];
-                const date = new Date(day.date);
-
-                return (
-                  <div
-                    key={index}
-                    className="text-center p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
-                  >
-                    <p className="text-sm font-medium mb-2">
-                      {date.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric' })}
-                    </p>
-                    <DayIcon className="h-10 w-10 mx-auto mb-2 text-primary" />
-                    <p className="text-sm text-muted-foreground">{weatherLabels[dayCondition]}</p>
-                    <p className="font-semibold mt-1">
-                      {day.tempMin}° - {day.tempMax}°
-                    </p>
-                    <Badge variant="outline" className="mt-2">
-                      <Droplets className="h-3 w-3 mr-1" />
-                      {day.rainProbability}%
-                    </Badge>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Statistics Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid gap-4 md:grid-cols-4 mb-8">
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Laporan</p>
-                <p className="text-3xl font-bold">{mockDashboardStats.totalReports}</p>
-              </div>
-              <FileText className="h-10 w-10 text-primary/20" />
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <FileText className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{disasterReports.length + roadReports.length}</p>
+              <p className="text-sm text-muted-foreground">Total Laporan</p>
             </div>
           </CardContent>
         </Card>
-
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Sedang Ditangani</p>
-                <p className="text-3xl font-bold text-emergency-warning">
-                  {mockDashboardStats.inProgressReports}
-                </p>
-              </div>
-              <Activity className="h-10 w-10 text-emergency-warning/20" />
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-warning/10">
+              <Clock className="h-5 w-5 text-warning" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">
+                {[...disasterReports, ...roadReports].filter((r) => r.status === 'pending').length}
+              </p>
+              <p className="text-sm text-muted-foreground">Menunggu</p>
             </div>
           </CardContent>
         </Card>
-
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Selesai</p>
-                <p className="text-3xl font-bold text-emergency-safe">
-                  {mockDashboardStats.resolvedReports}
-                </p>
-              </div>
-              <Eye className="h-10 w-10 text-emergency-safe/20" />
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-info/10">
+              <AlertTriangle className="h-5 w-5 text-info" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">
+                {
+                  [...disasterReports, ...roadReports].filter((r) => r.status === 'in_progress')
+                    .length
+                }
+              </p>
+              <p className="text-sm text-muted-foreground">Ditangani</p>
             </div>
           </CardContent>
         </Card>
-
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Sensor Aktif</p>
-                <p className="text-3xl font-bold">{mockDashboardStats.activeSensors}</p>
-              </div>
-              <Gauge className="h-10 w-10 text-primary/20" />
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-success/10">
+              <CheckCircle className="h-5 w-5 text-success" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">
+                {[...disasterReports, ...roadReports].filter((r) => r.status === 'resolved').length}
+              </p>
+              <p className="text-sm text-muted-foreground">Selesai</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Tabs for Different Monitoring */}
-      <Tabs defaultValue="sensors" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="sensors" className="gap-2">
-            <Gauge className="h-4 w-4" />
-            <span className="hidden sm:inline">Sensor IoT</span>
-            <span className="sm:hidden">Sensor</span>
-          </TabsTrigger>
-          <TabsTrigger value="fire" className="gap-2">
-            <Flame className="h-4 w-4" />
-            <span className="hidden sm:inline">Risiko Kebakaran</span>
-            <span className="sm:hidden">Kebakaran</span>
-          </TabsTrigger>
-          <TabsTrigger value="flood" className="gap-2">
-            <Droplets className="h-4 w-4" />
-            <span className="hidden sm:inline">Risiko Banjir</span>
-            <span className="sm:hidden">Banjir</span>
-          </TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="disaster" className="space-y-6">
+        <div className="flex items-center justify-between">
+          <TabsList>
+            <TabsTrigger value="disaster" className="gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              Laporan Bencana ({disasterReports.length})
+            </TabsTrigger>
+            <TabsTrigger value="road" className="gap-2">
+              <Construction className="h-4 w-4" />
+              Laporan Jalan ({roadReports.length})
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="sensors" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {sensors.map((sensor: any) => (
-              <Card key={sensor.id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">{sensor.name}</CardTitle>
-                    <Badge
-                      variant={
-                        sensor.status === 'online'
-                          ? 'default'
-                          : sensor.status === 'warning'
-                            ? 'destructive'
-                            : 'secondary'
-                      }
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Filter Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Status</SelectItem>
+              <SelectItem value="pending">Menunggu</SelectItem>
+              <SelectItem value="verified">Terverifikasi</SelectItem>
+              <SelectItem value="in_progress">Ditangani</SelectItem>
+              <SelectItem value="resolved">Selesai</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* DISASTER REPORTS */}
+        <TabsContent value="disaster" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Laporan Bencana yang Ditugaskan</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {filteredDisasterReports.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Tidak ada laporan bencana yang ditugaskan</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredDisasterReports.map((report) => (
+                    <div
+                      key={report.id}
+                      className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                     >
-                      {sensor.status === 'online'
-                        ? 'Aktif'
-                        : sensor.status === 'warning'
-                          ? 'Peringatan'
-                          : 'Offline'}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1">
-                      <p className="text-3xl font-bold">
-                        {sensor.value}
-                        {sensor.unit}
-                      </p>
-                      <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                        <MapPin className="h-3 w-3" />
-                        {sensor.location.district}
-                      </p>
-                    </div>
+                      <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div className="flex gap-4 flex-1">
+                          {report.images?.[0] && (
+                            <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                              <img
+                                src={`${API_BASE_URL}${report.images[0]}`}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
 
-                    {sensor.type === 'temperature' && (
-                      <Thermometer className="h-10 w-10 text-emergency-fire/50" />
-                    )}
-                    {sensor.type === 'humidity' && (
-                      <Droplets className="h-10 w-10 text-emergency-flood/50" />
-                    )}
-                    {sensor.type === 'smoke' && (
-                      <Cloud className="h-10 w-10 text-muted-foreground/50" />
-                    )}
-                    {sensor.type === 'water_level' && (
-                      <Gauge className="h-10 w-10 text-primary/50" />
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap gap-2 mb-2">
+                              <DisasterTypeBadge type={report.type as any} />
+                              {report.riskLevel && (
+                                <RiskLevelBadge level={report.riskLevel as any} />
+                              )}
+                              <StatusBadge status={report.status} />
+                            </div>
+
+                            <h3 className="font-semibold">{report.title}</h3>
+
+                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                              {report.description}
+                            </p>
+
+                            <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <MapPin className="h-4 w-4" />
+                                {report.address}
+                              </span>
+                              {report.reportedBy && (
+                                <span className="flex items-center gap-1">
+                                  <UserIcon className="h-4 w-4" />
+                                  {report.reportedBy.name}
+                                </span>
+                              )}
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-4 w-4" />
+                                {new Date(report.createdAt).toLocaleDateString('id-ID')}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <Dialog
+                            open={activityDialogOpen && selectedReport?.id === report.id}
+                            onOpenChange={(open) => {
+                              setActivityDialogOpen(open);
+                              if (open) {
+                                openActivityDialog(report);
+                              } else {
+                                setSelectedReport(null);
+                                setActivityForm({
+                                  description: '',
+                                  activityType: 'status_changed',
+                                  newStatus: '',
+                                  images: [],
+                                });
+                              }
+                            }}
+                          >
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openActivityDialog(report)}
+                              >
+                                <FileText className="h-4 w-4 mr-2" />
+                                Aktivitas
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                              <DialogHeader>
+                                <DialogTitle>Tambah Aktivitas</DialogTitle>
+                                <DialogDescription>
+                                  Tambahkan catatan atau update status laporan
+                                </DialogDescription>
+                              </DialogHeader>
+
+                              <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                  <Label>Jenis Aktivitas</Label>
+                                  <Select
+                                    value={activityForm.activityType}
+                                    onValueChange={(v) =>
+                                      setActivityForm({ ...activityForm, activityType: v })
+                                    }
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="status_changed">Ubah Status</SelectItem>
+                                      <SelectItem value="verified">Verifikasi</SelectItem>
+                                      <SelectItem value="in_progress">Mulai Penanganan</SelectItem>
+                                      <SelectItem value="resolved">Selesai</SelectItem>
+                                      <SelectItem value="note_added">Tambah Catatan</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+
+                                {activityForm.activityType === 'status_changed' && (
+                                  <div className="space-y-2">
+                                    <Label>Status Baru</Label>
+                                    <Select
+                                      value={activityForm.newStatus}
+                                      onValueChange={(v) =>
+                                        setActivityForm({ ...activityForm, newStatus: v })
+                                      }
+                                    >
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Pilih status" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="pending">Menunggu</SelectItem>
+                                        <SelectItem value="verified">Terverifikasi</SelectItem>
+                                        <SelectItem value="in_progress">Ditangani</SelectItem>
+                                        <SelectItem value="resolved">Selesai</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                )}
+
+                                <div className="space-y-2">
+                                  <Label>Deskripsi</Label>
+                                  <Textarea
+                                    value={activityForm.description}
+                                    onChange={(e) =>
+                                      setActivityForm({
+                                        ...activityForm,
+                                        description: e.target.value,
+                                      })
+                                    }
+                                    placeholder="Masukkan deskripsi aktivitas..."
+                                    rows={4}
+                                  />
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label>Gambar (Opsional, maks 5)</Label>
+                                  <Input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    onChange={handleFileChange}
+                                    disabled={activityForm.images.length >= 5}
+                                  />
+                                  {activityForm.images.length > 0 && (
+                                    <div className="grid grid-cols-5 gap-2 mt-2">
+                                      {activityForm.images.map((file, index) => (
+                                        <div key={index} className="relative">
+                                          <img
+                                            src={URL.createObjectURL(file)}
+                                            alt={`Preview ${index + 1}`}
+                                            className="w-full h-20 object-cover rounded"
+                                          />
+                                          <Button
+                                            type="button"
+                                            variant="destructive"
+                                            size="sm"
+                                            className="absolute top-0 right-0 h-6 w-6 p-0"
+                                            onClick={() => removeFile(index)}
+                                          >
+                                            <X className="h-3 w-3" />
+                                          </Button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {activities.length > 0 && (
+                                  <div className="space-y-2">
+                                    <Label>Riwayat Aktivitas</Label>
+                                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                                      {activities.map((activity) => (
+                                        <div
+                                          key={activity.id}
+                                          className="p-2 border rounded text-sm"
+                                        >
+                                          <p className="font-medium">{activity.description}</p>
+                                          <p className="text-xs text-muted-foreground">
+                                            {activity.createdBy.name} -{' '}
+                                            {new Date(activity.createdAt).toLocaleString('id-ID')}
+                                          </p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              <DialogFooter>
+                                <Button
+                                  variant="outline"
+                                  onClick={() => {
+                                    setActivityDialogOpen(false);
+                                    setActivityForm({
+                                      description: '',
+                                      activityType: 'status_changed',
+                                      newStatus: '',
+                                      images: [],
+                                    });
+                                  }}
+                                >
+                                  Batal
+                                </Button>
+                                <Button onClick={handleCreateActivity}>Simpan</Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+
+                          <Select
+                            value={report.status}
+                            onValueChange={(v) =>
+                              handleStatusChange(report.id, 'disaster', v as ReportStatus)
+                            }
+                          >
+                            <SelectTrigger className="w-36">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">Menunggu</SelectItem>
+                              <SelectItem value="verified">Terverifikasi</SelectItem>
+                              <SelectItem value="in_progress">Ditangani</SelectItem>
+                              <SelectItem value="resolved">Selesai</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="fire" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            {firePredictions.map((prediction: any) => (
-              <Card key={prediction.id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">{prediction.area}</CardTitle>
-                    <Badge
-                      variant={
-                        prediction.riskLevel === 'critical'
-                          ? 'destructive'
-                          : prediction.riskLevel === 'high'
-                            ? 'destructive'
-                            : 'secondary'
-                      }
-                      className={
-                        prediction.riskLevel === 'high'
-                          ? 'bg-emergency-warning text-emergency-warning-foreground'
-                          : ''
-                      }
+        {/* ROAD REPORTS */}
+        <TabsContent value="road" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Laporan Jalan yang Ditugaskan</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {filteredRoadReports.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Construction className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Tidak ada laporan jalan yang ditugaskan</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredRoadReports.map((report) => (
+                    <div
+                      key={report.id}
+                      className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                     >
-                      {prediction.riskLevel === 'critical'
-                        ? 'Kritis'
-                        : prediction.riskLevel === 'high'
-                          ? 'Tinggi'
-                          : prediction.riskLevel === 'medium'
-                            ? 'Sedang'
-                            : 'Rendah'}
-                    </Badge>
-                  </div>
-                  <CardDescription>{prediction.district}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-2xl font-bold">
-                        {Math.round(prediction.probability * 100)}%
-                      </p>
-                      <p className="text-sm text-muted-foreground">Probabilitas Kebakaran</p>
-                    </div>
-                    <Flame
-                      className={`h-10 w-10 ${
-                        prediction.riskLevel === 'critical'
-                          ? 'text-destructive'
-                          : prediction.riskLevel === 'high'
-                            ? 'text-emergency-warning'
-                            : 'text-muted-foreground/50'
-                      }`}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
+                      <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div className="flex gap-4 flex-1">
+                          {report.images?.[0] && (
+                            <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                              <img
+                                src={`${API_BASE_URL}${report.images[0]}`}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
 
-        <TabsContent value="flood" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            {floodAreas.map((area: any) => (
-              <Card key={area.id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">{area.area}</CardTitle>
-                    <Badge
-                      variant={
-                        area.riskLevel === 'critical'
-                          ? 'destructive'
-                          : area.riskLevel === 'high'
-                            ? 'destructive'
-                            : 'secondary'
-                      }
-                      className={
-                        area.riskLevel === 'high'
-                          ? 'bg-emergency-warning text-emergency-warning-foreground'
-                          : ''
-                      }
-                    >
-                      {area.riskLevel === 'critical'
-                        ? 'Kritis'
-                        : area.riskLevel === 'high'
-                          ? 'Tinggi'
-                          : area.riskLevel === 'medium'
-                            ? 'Sedang'
-                            : 'Rendah'}
-                    </Badge>
-                  </div>
-                  <CardDescription>{area.district}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-2xl font-bold">{Math.round(area.probability * 100)}%</p>
-                      <p className="text-sm text-muted-foreground">Probabilitas Banjir</p>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap gap-2 mb-2">
+                              <RoadIssueTypeBadge type={report.type as any} />
+                              {report.dangerLevel && (
+                                <DangerLevelBadge level={report.dangerLevel as any} />
+                              )}
+                              <StatusBadge status={report.status} />
+                            </div>
+
+                            <h3 className="font-semibold">{report.title}</h3>
+
+                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                              {report.description}
+                            </p>
+
+                            <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <MapPin className="h-4 w-4" />
+                                {report.address}
+                              </span>
+                              {report.reportedBy && (
+                                <span className="flex items-center gap-1">
+                                  <UserIcon className="h-4 w-4" />
+                                  {report.reportedBy.name}
+                                </span>
+                              )}
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-4 w-4" />
+                                {new Date(report.createdAt).toLocaleDateString('id-ID')}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <Dialog
+                            open={activityDialogOpen && selectedReport?.id === report.id}
+                            onOpenChange={(open) => {
+                              setActivityDialogOpen(open);
+                              if (open) {
+                                openActivityDialog(report);
+                              } else {
+                                setSelectedReport(null);
+                                setActivityForm({
+                                  description: '',
+                                  activityType: 'status_changed',
+                                  newStatus: '',
+                                  images: [],
+                                });
+                              }
+                            }}
+                          >
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openActivityDialog(report)}
+                              >
+                                <FileText className="h-4 w-4 mr-2" />
+                                Aktivitas
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                              <DialogHeader>
+                                <DialogTitle>Tambah Aktivitas</DialogTitle>
+                                <DialogDescription>
+                                  Tambahkan catatan atau update status laporan
+                                </DialogDescription>
+                              </DialogHeader>
+
+                              <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                  <Label>Jenis Aktivitas</Label>
+                                  <Select
+                                    value={activityForm.activityType}
+                                    onValueChange={(v) =>
+                                      setActivityForm({ ...activityForm, activityType: v })
+                                    }
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="status_changed">Ubah Status</SelectItem>
+                                      <SelectItem value="verified">Verifikasi</SelectItem>
+                                      <SelectItem value="in_progress">Mulai Penanganan</SelectItem>
+                                      <SelectItem value="resolved">Selesai</SelectItem>
+                                      <SelectItem value="note_added">Tambah Catatan</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+
+                                {activityForm.activityType === 'status_changed' && (
+                                  <div className="space-y-2">
+                                    <Label>Status Baru</Label>
+                                    <Select
+                                      value={activityForm.newStatus}
+                                      onValueChange={(v) =>
+                                        setActivityForm({ ...activityForm, newStatus: v })
+                                      }
+                                    >
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Pilih status" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="pending">Menunggu</SelectItem>
+                                        <SelectItem value="verified">Terverifikasi</SelectItem>
+                                        <SelectItem value="in_progress">Ditangani</SelectItem>
+                                        <SelectItem value="resolved">Selesai</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                )}
+
+                                <div className="space-y-2">
+                                  <Label>Deskripsi</Label>
+                                  <Textarea
+                                    value={activityForm.description}
+                                    onChange={(e) =>
+                                      setActivityForm({
+                                        ...activityForm,
+                                        description: e.target.value,
+                                      })
+                                    }
+                                    placeholder="Masukkan deskripsi aktivitas..."
+                                    rows={4}
+                                  />
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label>Gambar (Opsional, maks 5)</Label>
+                                  <Input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    onChange={handleFileChange}
+                                    disabled={activityForm.images.length >= 5}
+                                  />
+                                  {activityForm.images.length > 0 && (
+                                    <div className="grid grid-cols-5 gap-2 mt-2">
+                                      {activityForm.images.map((file, index) => (
+                                        <div key={index} className="relative">
+                                          <img
+                                            src={URL.createObjectURL(file)}
+                                            alt={`Preview ${index + 1}`}
+                                            className="w-full h-20 object-cover rounded"
+                                          />
+                                          <Button
+                                            type="button"
+                                            variant="destructive"
+                                            size="sm"
+                                            className="absolute top-0 right-0 h-6 w-6 p-0"
+                                            onClick={() => removeFile(index)}
+                                          >
+                                            <X className="h-3 w-3" />
+                                          </Button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {activities.length > 0 && (
+                                  <div className="space-y-2">
+                                    <Label>Riwayat Aktivitas</Label>
+                                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                                      {activities.map((activity) => (
+                                        <div
+                                          key={activity.id}
+                                          className="p-2 border rounded text-sm"
+                                        >
+                                          <p className="font-medium">{activity.description}</p>
+                                          <p className="text-xs text-muted-foreground">
+                                            {activity.createdBy.name} -{' '}
+                                            {new Date(activity.createdAt).toLocaleString('id-ID')}
+                                          </p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              <DialogFooter>
+                                <Button
+                                  variant="outline"
+                                  onClick={() => {
+                                    setActivityDialogOpen(false);
+                                    setActivityForm({
+                                      description: '',
+                                      activityType: 'status_changed',
+                                      newStatus: '',
+                                      images: [],
+                                    });
+                                  }}
+                                >
+                                  Batal
+                                </Button>
+                                <Button onClick={handleCreateActivity}>Simpan</Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+
+                          <Select
+                            value={report.status}
+                            onValueChange={(v) =>
+                              handleStatusChange(report.id, 'road', v as ReportStatus)
+                            }
+                          >
+                            <SelectTrigger className="w-36">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">Menunggu</SelectItem>
+                              <SelectItem value="verified">Terverifikasi</SelectItem>
+                              <SelectItem value="in_progress">Ditangani</SelectItem>
+                              <SelectItem value="resolved">Selesai</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
                     </div>
-                    <Droplets
-                      className={`h-10 w-10 ${
-                        area.riskLevel === 'critical'
-                          ? 'text-destructive'
-                          : area.riskLevel === 'high'
-                            ? 'text-emergency-warning'
-                            : 'text-muted-foreground/50'
-                      }`}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
-
-      {/* Quick Links to Report */}
-      <Card className="bg-linear-to-r from-primary/5 to-accent/5">
-        <CardHeader>
-          <CardTitle>Menu Pelaporan</CardTitle>
-          <CardDescription>
-            Laporkan kondisi darurat atau infrastruktur yang rusak di sekitar Anda
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link href="/laporkan-bencana">
-              <Button variant="outline" className="w-full h-auto py-6 flex-col gap-2">
-                <AlertTriangle className="h-8 w-8 text-destructive" />
-                <span className="font-semibold">Laporkan Bencana</span>
-                <span className="text-xs text-muted-foreground">Banjir, Kebakaran, Longsor</span>
-              </Button>
-            </Link>
-
-            <Link href="/laporkan-jalan">
-              <Button variant="outline" className="w-full h-auto py-6 flex-col gap-2">
-                <Construction className="h-8 w-8 text-emergency-warning" />
-                <span className="font-semibold">Lapor Jalan Rusak</span>
-                <span className="text-xs text-muted-foreground">Berlubang, Retak, Longsor</span>
-              </Button>
-            </Link>
-
-            <Link href="/public-reports">
-              <Button variant="outline" className="w-full h-auto py-6 flex-col gap-2">
-                <Eye className="h-8 w-8 text-primary" />
-                <span className="font-semibold">Lihat Semua Laporan</span>
-                <span className="text-xs text-muted-foreground">Pantau Status Laporan</span>
-              </Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

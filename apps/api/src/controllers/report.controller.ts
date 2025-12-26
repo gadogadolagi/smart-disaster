@@ -1,17 +1,17 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
+import fs from 'fs';
 import { AuthRequest } from '../middleware/auth';
+import { upload } from '../middleware/upload';
 import { reportService } from '../services/report.service';
+import { HTTP_STATUS, MESSAGES } from '../utils/constants';
 import { asyncHandler } from '../utils/errorHandler';
-import { MESSAGES, HTTP_STATUS } from '../utils/constants';
+import { logger } from '../utils/logger';
 import {
   disasterReportFormSchema,
   roadReportFormSchema,
   updateDisasterReportSchema,
   updateRoadReportSchema,
 } from '../utils/validator';
-import { upload } from '../middleware/upload';
-import { logger } from '../utils/logger';
-import fs from 'fs';
 
 export class ReportController {
   // Disaster Reports
@@ -26,7 +26,7 @@ export class ReportController {
   });
 
   getDisasterReportById = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const report = await reportService.getDisasterReportById(id);
 
     res.status(HTTP_STATUS.OK).json({
@@ -169,7 +169,7 @@ export class ReportController {
   ];
 
   updateDisasterReport = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const validation = updateDisasterReportSchema.safeParse(req.body);
 
     if (!validation.success) {
@@ -193,7 +193,7 @@ export class ReportController {
   });
 
   deleteDisasterReport = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     await reportService.deleteDisasterReport(id);
 
     res.status(HTTP_STATUS.OK).json({
@@ -214,7 +214,7 @@ export class ReportController {
   });
 
   getRoadReportById = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const report = await reportService.getRoadReportById(id);
 
     res.status(HTTP_STATUS.OK).json({
@@ -357,7 +357,7 @@ export class ReportController {
   ];
 
   updateRoadReport = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const validation = updateRoadReportSchema.safeParse(req.body);
 
     if (!validation.success) {
@@ -381,12 +381,29 @@ export class ReportController {
   });
 
   deleteRoadReport = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     await reportService.deleteRoadReport(id);
 
     res.status(HTTP_STATUS.OK).json({
       success: true,
       message: MESSAGES.REPORT_DELETE_SUCCESS,
+    });
+  });
+
+  getUserReports = asyncHandler(async (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+        success: false,
+        message: MESSAGES.AUTH_UNAUTHORIZED,
+      });
+    }
+
+    const result = await reportService.getUserReports(req.user.id, req.query);
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: MESSAGES.REPORT_FETCH_SUCCESS,
+      data: result,
     });
   });
 }

@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { prisma } from '../lib/prisma';
-import { generateToken } from '../middleware/auth';
+import { generateAccessToken, generateRefreshToken } from '../middleware/auth';
 import { MESSAGES } from '../utils/constants';
 import { AuthenticationError, NotFoundError, ValidationError } from '../utils/errorHandler';
 import { loginSchema, registerSchema } from '../utils/validator';
@@ -27,7 +27,8 @@ export interface AuthResponse {
     role: string;
     avatar?: string;
   };
-  token: string;
+  accessToken: string;
+  refreshToken: string;
 }
 
 export class AuthService {
@@ -72,11 +73,29 @@ export class AuthService {
       },
     });
 
-    // Generate token
-    const token = generateToken({
+    // Generate tokens
+    const accessToken = generateAccessToken({
       id: user.id,
       email: user.email,
       role: user.role,
+    });
+
+    const refreshToken = generateRefreshToken({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    // Store refresh token in database
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days from now
+
+    await prisma.session.create({
+      data: {
+        userId: user.id,
+        token: refreshToken,
+        expiresAt,
+      },
     });
 
     return {
@@ -88,7 +107,8 @@ export class AuthService {
         role: user.role,
         avatar: user.avatar || undefined,
       },
-      token,
+      accessToken,
+      refreshToken,
     };
   }
 
@@ -131,11 +151,29 @@ export class AuthService {
       throw new AuthenticationError(MESSAGES.AUTH_INVALID_CREDENTIALS);
     }
 
-    // Generate token
-    const token = generateToken({
+    // Generate tokens
+    const accessToken = generateAccessToken({
       id: user.id,
       email: user.email,
       role: user.role,
+    });
+
+    const refreshToken = generateRefreshToken({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    // Store refresh token in database
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days from now
+
+    await prisma.session.create({
+      data: {
+        userId: user.id,
+        token: refreshToken,
+        expiresAt,
+      },
     });
 
     return {
@@ -147,8 +185,114 @@ export class AuthService {
         role: user.role,
         avatar: user.avatar || undefined,
       },
-      token,
+      accessToken,
+      refreshToken,
     };
+  }
+
+  async refreshAccessToken(
+    refreshToken: string
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    // Validate token format
+    if (!refreshToken || typeof refreshToken !== 'string' || refreshToken.trim().length === 0) {
+      throw new AuthenticationError('Invalid refresh token');
+    }
+
+    const trimmedToken = refreshToken.trim();
+
+    // Verify refresh token JWT signature first
+    const { verifyRefreshToken } = await import('../middleware/auth');
+    let decoded;
+    try {
+      decoded = verifyRefreshToken(trimmedToken);
+    } catch (error) {
+      throw new AuthenticationError('Invalid or expired refresh token');
+    }
+
+    // Check if refresh token exists in database
+    const session = await prisma.session.findUnique({
+      where: { token: trimmedToken },
+      include: { user: true },
+    });
+
+    if (!session) {
+      throw new AuthenticationError('Invalid or expired refresh token');
+    }
+
+    // Check if session is expired
+    if (session.expiresAt < new Date()) {
+      // Delete expired session
+      await prisma.session.delete({ where: { id: session.id } });
+      throw new AuthenticationError('Invalid or expired refresh token');
+    }
+
+    // Verify user is still active
+    if (!session.user.isActive) {
+      // Delete session for inactive user
+      await prisma.session.delete({ where: { id: session.id } });
+      throw new AuthenticationError(MESSAGES.AUTH_UNAUTHORIZED);
+    }
+
+    // Verify token payload matches session user
+    if (decoded.id !== session.user.id || decoded.email !== session.user.email) {
+      // Token mismatch - potential security issue, delete session
+      await prisma.session.delete({ where: { id: session.id } });
+      throw new AuthenticationError('Invalid refresh token');
+    }
+
+    // Generate new tokens (token rotation for security)
+    const newAccessToken = generateAccessToken({
+      id: session.user.id,
+      email: session.user.email,
+      role: session.user.role,
+    });
+
+    const newRefreshToken = generateRefreshToken({
+      id: session.user.id,
+      email: session.user.email,
+      role: session.user.role,
+    });
+
+    // Update session with new refresh token (invalidate old one)
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days from now
+
+    await prisma.session.update({
+      where: { id: session.id },
+      data: {
+        token: newRefreshToken,
+        expiresAt,
+      },
+    });
+
+    return {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    };
+  }
+
+  async logout(refreshToken: string): Promise<void> {
+    // Validate token format
+    if (!refreshToken || typeof refreshToken !== 'string' || refreshToken.trim().length === 0) {
+      return; // Silently return if invalid to prevent token enumeration
+    }
+
+    // Delete session (silently fail if token doesn't exist)
+    try {
+      await prisma.session.deleteMany({
+        where: { token: refreshToken.trim() },
+      });
+    } catch (error) {
+      // Log error but don't throw to prevent token enumeration
+      console.error('Error deleting session during logout:', error);
+    }
+  }
+
+  async logoutAll(userId: string): Promise<void> {
+    // Delete all sessions for user
+    await prisma.session.deleteMany({
+      where: { userId },
+    });
   }
 
   async getProfile(userId: string) {

@@ -1,8 +1,8 @@
-import { Response, NextFunction } from 'express';
+import { NextFunction, Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { userService } from '../services/user.service';
-import { asyncHandler } from '../utils/errorHandler';
 import { HTTP_STATUS } from '../utils/constants';
+import { asyncHandler } from '../utils/errorHandler';
 
 export class UserController {
   getUsers = asyncHandler(async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -29,7 +29,7 @@ export class UserController {
       });
     }
 
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const user = await userService.getUserById(id, req.user.id, req.user.role);
 
     res.status(HTTP_STATUS.OK).json({
@@ -46,7 +46,7 @@ export class UserController {
       });
     }
 
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const user = await userService.updateUser(id, req.body, req.user.role);
 
     res.status(HTTP_STATUS.OK).json({
@@ -64,7 +64,7 @@ export class UserController {
       });
     }
 
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     await userService.deleteUser(id, req.user.role);
 
     res.status(HTTP_STATUS.OK).json({

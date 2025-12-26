@@ -387,4 +387,41 @@ router.delete(
   reportController.deleteRoadReport
 );
 
+/**
+ * @swagger
+ * /api/reports/my-reports:
+ *   get:
+ *     summary: Get current user's reports
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [pending, verified, in_progress, resolved]
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           description: Filter by type (disaster or road)
+ *     responses:
+ *       200:
+ *         description: List of user's reports
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/my-reports', authenticate, reportController.getUserReports);
+
 export default router;

@@ -149,10 +149,10 @@
 
 'use client';
 
+import { API_BASE_URL } from '@/lib/api/config';
+import type { User, UserRole } from '@/types';
 import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import type { User, UserRole } from '@/types';
-import { API_BASE_URL } from '@/lib/api/config';
 
 interface AuthContextType {
   user: User | null;
@@ -161,12 +161,18 @@ interface AuthContextType {
   register: (name: string, email: string, password: string, phone?: string) => Promise<boolean>;
   logout: () => Promise<void>;
   refreshMe: () => Promise<void>;
+  refreshAccessToken: () => Promise<boolean>;
+  getAccessToken: () => string | null;
+  updateProfile: (data: { name?: string; phone?: string; avatar?: string }) => Promise<boolean>;
   isAuthenticated: boolean;
   isGovernment: boolean;
   isCitizen: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const ACCESS_TOKEN_KEY = 'access_token';
+const REFRESH_TOKEN_KEY = 'refresh_token';
 
 async function readJsonSafe(res: Response) {
   const text = await res.text();
@@ -180,13 +186,103 @@ async function readJsonSafe(res: Response) {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const getAccessToken = (): string | null => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(ACCESS_TOKEN_KEY);
+  };
+
+  const getRefreshToken = (): string | null => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(REFRESH_TOKEN_KEY);
+  };
+
+  const setTokens = (accessToken: string, refreshToken: string) => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+    localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  };
+
+  const clearTokens = () => {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+  };
+
+  const refreshAccessToken = async (): Promise<boolean> => {
+    const refreshToken = getRefreshToken();
+    if (!refreshToken) {
+      return false;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      const data = await readJsonSafe(res);
+
+      if (!res.ok || !data?.data) {
+        clearTokens();
+        setUser(null);
+        return false;
+      }
+
+      setTokens(data.data.accessToken, data.data.refreshToken);
+      return true;
+    } catch (e) {
+      console.error('refreshAccessToken error:', e);
+      clearTokens();
+      setUser(null);
+      return false;
+    }
+  };
 
   const refreshMe = async () => {
+    // Prevent multiple simultaneous calls
+    if (isRefreshing) {
+      return;
+    }
+
+    const accessToken = getAccessToken();
+    if (!accessToken) {
+      setUser(null);
+      return;
+    }
+
+    setIsRefreshing(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
         method: 'GET',
-        credentials: 'include', // ✅ penting: kirim cookie
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       });
+
+      if (res.status === 401) {
+        // Try to refresh token
+        const refreshed = await refreshAccessToken();
+        if (refreshed) {
+          // Retry with new token
+          const newToken = getAccessToken();
+          const retryRes = await fetch(`${API_BASE_URL}/api/auth/me`, {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${newToken}`,
+            },
+          });
+          if (retryRes.ok) {
+            const retryData = await readJsonSafe(retryRes);
+            setUser(retryData?.data ?? null);
+            return;
+          }
+        }
+        setUser(null);
+        return;
+      }
 
       if (!res.ok) {
         setUser(null);
@@ -194,10 +290,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const data = await readJsonSafe(res);
-      setUser(data?.user ?? null);
+      setUser(data?.data ?? null);
     } catch (e) {
       console.error('refreshMe error:', e);
       setUser(null);
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -212,19 +310,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string, role: UserRole): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/login`, {
+      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // ✅ supaya cookie tersimpan
-        body: JSON.stringify({ email, password, role }),
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await readJsonSafe(res);
 
-      if (!res.ok) return false;
+      if (!res.ok || !data?.data) return false;
 
-      // backend idealnya return user + set cookie
-      setUser(data?.user ?? null);
+      // Store tokens
+      setTokens(data.data.accessToken, data.data.refreshToken);
+
+      // Set user
+      setUser(data.data.user ?? null);
       return true;
     } catch (e) {
       console.error('login error:', e);
@@ -242,17 +342,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/register`, {
+      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ name, email, password, phone }),
       });
 
       const data = await readJsonSafe(res);
-      if (!res.ok) return false;
+      if (!res.ok || !data?.data) return false;
 
-      setUser(data?.user ?? null);
+      // Store tokens
+      setTokens(data.data.accessToken, data.data.refreshToken);
+
+      // Set user
+      setUser(data.data.user ?? null);
       return true;
     } catch (e) {
       console.error('register error:', e);
@@ -265,14 +368,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     setIsLoading(true);
     try {
-      await fetch(`${API_BASE_URL}/api/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      });
+      const refreshToken = getRefreshToken();
+      if (refreshToken) {
+        await fetch(`${API_BASE_URL}/api/auth/logout`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken }),
+        });
+      }
     } catch (e) {
       console.error('logout error:', e);
     } finally {
+      clearTokens();
       setUser(null);
+      setIsLoading(false);
+    }
+  };
+
+  const updateProfile = async (data: { name?: string; phone?: string; avatar?: string }): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      const accessToken = getAccessToken();
+      if (!accessToken) {
+        return false;
+      }
+
+      const res = await fetch(`${API_BASE_URL}/api/auth/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      const responseData = await readJsonSafe(res);
+
+      if (!res.ok || !responseData?.data) {
+        return false;
+      }
+
+      // Update user state
+      setUser(responseData.data);
+      return true;
+    } catch (e) {
+      console.error('updateProfile error:', e);
+      return false;
+    } finally {
       setIsLoading(false);
     }
   };
@@ -285,9 +427,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       register,
       logout,
       refreshMe,
+      refreshAccessToken,
+      getAccessToken,
+      updateProfile,
       isAuthenticated: !!user,
-      isGovernment: user?.role === 'government',
-      isCitizen: user?.role === 'citizen',
+      isGovernment: user?.role === 'admin',
+      isCitizen: user?.role === 'user',
     }),
     [user, isLoading]
   );

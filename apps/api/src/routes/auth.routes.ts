@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authController } from '../controllers/auth.controller';
 import { authenticate } from '../middleware/auth';
-import { authRateLimiter } from '../middleware/rateLimiter';
+import { authRateLimiter, profileRateLimiter } from '../middleware/rateLimiter';
 
 const router: Router = Router();
 
@@ -39,6 +39,22 @@ const router: Router = Router();
  *     responses:
  *       201:
  *         description: User registered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       $ref: '#/components/schemas/User'
+ *                     accessToken:
+ *                       type: string
+ *                     refreshToken:
+ *                       type: string
  *       400:
  *         description: Validation error
  *       409:
@@ -84,7 +100,9 @@ router.post('/register', authRateLimiter, authController.register);
  *                   properties:
  *                     user:
  *                       $ref: '#/components/schemas/User'
- *                     token:
+ *                     accessToken:
+ *                       type: string
+ *                     refreshToken:
  *                       type: string
  *       401:
  *         description: Invalid credentials
@@ -114,7 +132,7 @@ router.post('/login', authRateLimiter, authController.login);
  *       401:
  *         description: Unauthorized
  */
-router.get('/me', authenticate, authController.getProfile);
+router.get('/me', authenticate, profileRateLimiter, authController.getProfile);
 
 /**
  * @swagger
@@ -177,5 +195,73 @@ router.put('/profile', authenticate, authController.updateProfile);
  *         description: Unauthorized
  */
 router.put('/change-password', authenticate, authController.changePassword);
+
+/**
+ * @swagger
+ * /api/auth/refresh:
+ *   post:
+ *     summary: Refresh access token using refresh token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Token refreshed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     accessToken:
+ *                       type: string
+ *                     refreshToken:
+ *                       type: string
+ *       400:
+ *         description: Invalid refresh token
+ *       401:
+ *         description: Unauthorized
+ */
+// Rate limit refresh token endpoint to prevent abuse
+router.post('/refresh', authRateLimiter, authController.refreshToken);
+
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Logout and invalidate refresh token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Logged out successfully
+ *       400:
+ *         description: Bad request
+ */
+// Rate limit logout endpoint to prevent abuse
+router.post('/logout', authRateLimiter, authController.logout);
 
 export default router;

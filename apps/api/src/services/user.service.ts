@@ -1,7 +1,7 @@
 import { prisma } from '../lib/prisma';
-import { NotFoundError, AuthorizationError } from '../utils/errorHandler';
-import { parsePaginationParams, createPaginationResponse } from '../utils/pagination';
 import { MESSAGES } from '../utils/constants';
+import { AuthorizationError, NotFoundError } from '../utils/errorHandler';
+import { createPaginationResponse, parsePaginationParams } from '../utils/pagination';
 
 export class UserService {
   async getUsers(query: any, requesterRole: string) {

@@ -206,6 +206,7 @@ import {
   Menu,
   Shield,
   User,
+  UserCircle,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -245,7 +246,7 @@ export function Navbar() {
     // 2) jika sudah login:
     if (isAuthenticated) {
       // pemerintah: hanya tambah dashboard admin
-      if (isGovernment || user?.role === 'government') {
+      if (isGovernment || user?.role === 'admin') {
         items.push(...governmentNavItems);
       } else {
         // warga: tambah menu warga
@@ -310,9 +311,18 @@ export function Navbar() {
                   <p className="text-sm font-medium">{user?.name ?? '-'}</p>
                   <p className="text-xs text-muted-foreground">{user?.email ?? '-'}</p>
                   <p className="text-xs text-muted-foreground capitalize mt-1">
-                    {user?.role === 'government' ? '🏛️ Pemerintah' : '👤 Warga'}
+                    {user?.role === 'admin' ? 'Pemerintah' : 'Warga'}
                   </p>
                 </div>
+
+                <DropdownMenuSeparator />
+
+                <Link href="/profile">
+                  <DropdownMenuItem onClick={() => setIsMobileMenuOpen(false)}>
+                    <UserCircle className="mr-2 h-4 w-4" />
+                    Profil Saya
+                  </DropdownMenuItem>
+                </Link>
 
                 <DropdownMenuSeparator />
 

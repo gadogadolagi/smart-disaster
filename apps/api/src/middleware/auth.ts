@@ -14,18 +14,46 @@ export interface AuthRequest extends Request {
 
 // JWT Secret from environment
 const JWT_SECRET: string = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '7d';
+const JWT_REFRESH_SECRET: string = process.env.JWT_REFRESH_SECRET || JWT_SECRET + '-refresh';
+const ACCESS_TOKEN_EXPIRES_IN: string = process.env.ACCESS_TOKEN_EXPIRES_IN || '15m';
+const REFRESH_TOKEN_EXPIRES_IN: string = process.env.REFRESH_TOKEN_EXPIRES_IN || '7d';
 
-export function generateToken(payload: { id: string; email: string; role: string }): string {
+// Generate access token (short-lived)
+export function generateAccessToken(payload: { id: string; email: string; role: string }): string {
   if (!JWT_SECRET) {
     throw new Error('JWT_SECRET is not configured');
   }
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions);
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRES_IN } as jwt.SignOptions);
 }
 
+// Generate refresh token (long-lived)
+export function generateRefreshToken(payload: { id: string; email: string; role: string }): string {
+  if (!JWT_REFRESH_SECRET) {
+    throw new Error('JWT_REFRESH_SECRET is not configured');
+  }
+  return jwt.sign(payload, JWT_REFRESH_SECRET, {
+    expiresIn: REFRESH_TOKEN_EXPIRES_IN,
+  } as jwt.SignOptions);
+}
+
+// Legacy function for backward compatibility
+export function generateToken(payload: { id: string; email: string; role: string }): string {
+  return generateAccessToken(payload);
+}
+
+// Verify access token
 export function verifyToken(token: string): { id: string; email: string; role: string } {
   try {
     return jwt.verify(token, JWT_SECRET) as { id: string; email: string; role: string };
+  } catch (error) {
+    throw new AuthenticationError(MESSAGES.AUTH_TOKEN_INVALID);
+  }
+}
+
+// Verify refresh token
+export function verifyRefreshToken(token: string): { id: string; email: string; role: string } {
+  try {
+    return jwt.verify(token, JWT_REFRESH_SECRET) as { id: string; email: string; role: string };
   } catch (error) {
     throw new AuthenticationError(MESSAGES.AUTH_TOKEN_INVALID);
   }
