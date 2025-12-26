@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,11 +20,19 @@ import { useAuth } from '@/contexts/AuthContext';
 import { API_ENDPOINTS } from '@/lib/api/config';
 import type { RoadIssueType } from '@/types';
 import { Brain, Construction, Upload, X, MapPin, Navigation } from 'lucide-react';
+import { useGeolocated } from 'react-geolocated';
 import { toast } from 'sonner';
 
 export default function LaporkanJalan() {
   const { user } = useAuth();
   const router = useRouter();
+
+  const { coords, isGeolocationAvailable, isGeolocationEnabled, positionError } = useGeolocated({
+    positionOptions: {
+      enableHighAccuracy: true,
+    },
+    userDecisionTimeout: 5000,
+  });
 
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -39,8 +47,19 @@ export default function LaporkanJalan() {
     reporterPhone: '',
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [locationStatus, setLocationStatus] = useState<'idle' | 'getting' | 'success' | 'error'>('idle');
-  const [locationError, setLocationError] = useState<string>('');
+  const [locationUsed, setLocationUsed] = useState(false);
+
+  // Auto-fill location when coords become available
+  useEffect(() => {
+    if (coords && !locationUsed) {
+      setFormData((prev) => ({
+        ...prev,
+        lat: coords.latitude.toString(),
+        lng: coords.longitude.toString(),
+      }));
+      setLocationUsed(true);
+    }
+  }, [coords, locationUsed]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -55,50 +74,16 @@ export default function LaporkanJalan() {
     setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
   };
 
-  const getCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      setLocationError('Geolocation tidak didukung oleh browser Anda');
-      setLocationStatus('error');
-      return;
+  const handleUseLocation = () => {
+    if (coords) {
+      setFormData((prev) => ({
+        ...prev,
+        lat: coords.latitude.toString(),
+        lng: coords.longitude.toString(),
+      }));
+      setLocationUsed(true);
+      toast.success('Lokasi berhasil digunakan');
     }
-
-    setLocationStatus('getting');
-    setLocationError('');
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setFormData({
-          ...formData,
-          lat: latitude.toString(),
-          lng: longitude.toString(),
-        });
-        setLocationStatus('success');
-        toast.success('Lokasi berhasil didapatkan');
-      },
-      (error) => {
-        let errorMessage = 'Gagal mendapatkan lokasi';
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage = 'Akses lokasi ditolak. Silakan izinkan akses lokasi di pengaturan browser.';
-            break;
-          case error.POSITION_UNAVAILABLE:
-            errorMessage = 'Informasi lokasi tidak tersedia.';
-            break;
-          case error.TIMEOUT:
-            errorMessage = 'Waktu permintaan lokasi habis.';
-            break;
-        }
-        setLocationError(errorMessage);
-        setLocationStatus('error');
-        toast.error(errorMessage);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
-      }
-    );
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -272,31 +257,49 @@ export default function LaporkanJalan() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={getCurrentLocation}
-                    disabled={locationStatus === 'getting'}
+                    onClick={handleUseLocation}
+                    disabled={!isGeolocationAvailable || !isGeolocationEnabled || !coords}
                     className="mt-6"
                   >
-                    {locationStatus === 'getting' ? (
+                    {coords ? (
+                      <>
+                        <MapPin className="h-4 w-4 mr-2" />
+                        {locationUsed ? 'Perbarui Lokasi' : 'Gunakan Lokasi'}
+                      </>
+                    ) : (
                       <>
                         <Navigation className="h-4 w-4 mr-2 animate-spin" />
                         Mendapatkan...
                       </>
-                    ) : (
-                      <>
-                        <MapPin className="h-4 w-4 mr-2" />
-                        Ambil Lokasi
-                      </>
                     )}
                   </Button>
                 </div>
-                {locationStatus === 'success' && (
+                {coords && locationUsed && (
                   <p className="text-xs text-success flex items-center gap-1">
                     <MapPin className="h-3 w-3" />
-                    Lokasi berhasil didapatkan
+                    Lokasi digunakan: {coords.latitude.toFixed(6)}, {coords.longitude.toFixed(6)}
                   </p>
                 )}
-                {locationError && (
-                  <p className="text-xs text-destructive">{locationError}</p>
+                {coords && !locationUsed && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    Lokasi tersedia, klik tombol untuk menggunakan
+                  </p>
+                )}
+                {!isGeolocationAvailable && (
+                  <p className="text-xs text-destructive">
+                    Geolocation tidak didukung oleh browser Anda
+                  </p>
+                )}
+                {isGeolocationAvailable && !isGeolocationEnabled && (
+                  <p className="text-xs text-destructive">
+                    Akses lokasi ditolak. Silakan izinkan akses lokasi di pengaturan browser.
+                  </p>
+                )}
+                {positionError && (
+                  <p className="text-xs text-destructive">
+                    {positionError.message || 'Gagal mendapatkan lokasi'}
+                  </p>
                 )}
               </div>
 

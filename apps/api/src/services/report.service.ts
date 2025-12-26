@@ -9,11 +9,12 @@ import { emailService } from './email.service';
 export class ReportService {
   async getDisasterReports(query: any) {
     const { page, limit, skip } = parsePaginationParams(query);
-    const { status, riskLevel, district } = query;
+    const { status, riskLevel, district, type } = query;
 
     const where: Prisma.DisasterReportWhereInput = {};
     if (status) where.status = status as any;
     if (riskLevel) where.riskLevel = riskLevel as any;
+    if (type) where.type = type as any;
     if (district) {
       where.district = {
         contains: district as string,
@@ -49,6 +50,14 @@ export class ReportService {
             select: {
               id: true,
               name: true,
+              phone: true,
+            },
+          },
+          assignedTo: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
               phone: true,
             },
           },
@@ -89,6 +98,14 @@ export class ReportService {
           select: {
             id: true,
             name: true,
+            phone: true,
+          },
+        },
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
             phone: true,
           },
         },
@@ -290,6 +307,14 @@ export class ReportService {
             phone: true,
           },
         },
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
       },
     });
 
@@ -359,6 +384,14 @@ export class ReportService {
               phone: true,
             },
           },
+          assignedTo: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+            },
+          },
         },
         orderBy: {
           createdAt: 'desc',
@@ -397,6 +430,14 @@ export class ReportService {
           select: {
             id: true,
             name: true,
+            phone: true,
+          },
+        },
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
             phone: true,
           },
         },
@@ -551,6 +592,14 @@ export class ReportService {
           select: {
             id: true,
             name: true,
+            phone: true,
+          },
+        },
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
             phone: true,
           },
         },

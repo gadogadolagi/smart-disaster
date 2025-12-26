@@ -9,10 +9,18 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import {
   Select,
   SelectContent,
@@ -23,9 +31,9 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { API_ENDPOINTS, apiCall } from '@/lib/api/config';
 import { User } from '@/types';
-import { Edit, Search, Trash2, UserPlus, Users } from 'lucide-react';
+import { Edit, Search, Trash2, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 export default function UserManagement() {
@@ -37,6 +45,15 @@ export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+    hasNext: false,
+    hasPrev: false,
+  });
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -62,18 +79,47 @@ export default function UserManagement() {
     loadUsers();
   }, [mounted, authLoading, isAuthenticated, user, router]);
 
-  const loadUsers = async () => {
+  // Auto-fetch when filters or page change
+  useEffect(() => {
+    if (mounted && !authLoading && isAuthenticated && user?.role === 'admin') {
+      setCurrentPage(1);
+      loadUsers(1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, roleFilter]);
+
+  // Auto-fetch when page changes
+  useEffect(() => {
+    if (mounted && !authLoading && isAuthenticated && user?.role === 'admin' && currentPage > 0) {
+      loadUsers(currentPage);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
+
+  const loadUsers = async (page: number = currentPage) => {
     setIsLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (roleFilter !== 'all') params.append('role', roleFilter);
-      if (searchQuery) params.append('search', searchQuery);
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: '10',
+      });
+
+      if (roleFilter !== 'all') {
+        params.append('role', roleFilter);
+      }
+
+      if (searchQuery.trim()) {
+        params.append('search', searchQuery.trim());
+      }
 
       const res = await apiCall(`${API_ENDPOINTS.users.list}?${params.toString()}`);
       const data = await res.json();
 
       if (res.ok && data.success) {
         setUsers(data.data || []);
+        if (data.pagination) {
+          setPagination(data.pagination);
+        }
       } else {
         throw new Error(data.message || 'Gagal memuat data user');
       }
@@ -121,7 +167,7 @@ export default function UserManagement() {
       if (res.ok && data.success) {
         toast.success('User berhasil diperbarui');
         setEditDialogOpen(false);
-        loadUsers();
+        loadUsers(currentPage);
       } else {
         throw new Error(data.message || 'Gagal memperbarui user');
       }
@@ -156,7 +202,7 @@ export default function UserManagement() {
       if (res.ok && data.success) {
         toast.success('User berhasil dihapus');
         setDeleteDialogOpen(false);
-        loadUsers();
+        loadUsers(currentPage);
       } else {
         throw new Error(data.message || 'Gagal menghapus user');
       }
@@ -165,13 +211,6 @@ export default function UserManagement() {
       toast.error(error.message || 'Gagal menghapus user');
     }
   };
-
-  const filteredUsers = users.filter((u) => {
-    const matchesSearch =
-      u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
 
   if (!mounted || authLoading) {
     return (
@@ -192,44 +231,49 @@ export default function UserManagement() {
         <p className="text-muted-foreground">Kelola semua pengguna sistem</p>
       </div>
 
-      <div className="mb-6 flex flex-col sm:flex-row gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Cari user..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <div className="flex gap-2">
-          <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter Role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Semua Role</SelectItem>
-              <SelectItem value="user">User</SelectItem>
-              <SelectItem value="petugas">Petugas</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button onClick={loadUsers} variant="outline">
-            Refresh
-          </Button>
-        </div>
-      </div>
+      {/* Filters */}
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Cari user (nama atau email)..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={roleFilter} onValueChange={setRoleFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter Role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Role</SelectItem>
+                <SelectItem value="user">User</SelectItem>
+                <SelectItem value="petugas">Petugas</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
 
+      {/* Users Table */}
       {isLoading ? (
-        <div className="text-center py-8">
-          <p>Memuat data user...</p>
-        </div>
+        <Card>
+          <CardContent className="py-8">
+            <div className="text-center">
+              <p>Memuat data user...</p>
+            </div>
+          </CardContent>
+        </Card>
       ) : (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Daftar User ({filteredUsers.length})
+              Daftar User ({pagination.total} total)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -237,65 +281,133 @@ export default function UserManagement() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-4">Nama</th>
-                    <th className="text-left p-4">Email</th>
-                    <th className="text-left p-4">Phone</th>
-                    <th className="text-left p-4">Role</th>
-                    <th className="text-left p-4">Status</th>
-                    <th className="text-left p-4">Aksi</th>
+                    <th className="text-left p-4 font-medium">Nama</th>
+                    <th className="text-left p-4 font-medium">Email</th>
+                    <th className="text-left p-4 font-medium">Phone</th>
+                    <th className="text-left p-4 font-medium">Role</th>
+                    <th className="text-left p-4 font-medium">Status</th>
+                    <th className="text-left p-4 font-medium">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredUsers.map((u) => (
-                    <tr key={u.id} className="border-b hover:bg-muted/50">
-                      <td className="p-4">{u.name}</td>
-                      <td className="p-4">{u.email}</td>
-                      <td className="p-4">{u.phone || '-'}</td>
-                      <td className="p-4">
-                        <span className="px-2 py-1 rounded-full text-xs bg-primary/10 text-primary">
-                          {u.role}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs ${
-                            u.isActive
-                              ? 'bg-success/10 text-success'
-                              : 'bg-destructive/10 text-destructive'
-                          }`}
-                        >
-                          {u.isActive ? 'Aktif' : 'Nonaktif'}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(u)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(u)}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                  {users.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-8 text-muted-foreground">
+                        Tidak ada user ditemukan
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    users.map((u) => (
+                      <tr key={u.id} className="border-b hover:bg-muted/50 transition-colors">
+                        <td className="p-4">{u.name}</td>
+                        <td className="p-4">{u.email}</td>
+                        <td className="p-4">{u.phone || '-'}</td>
+                        <td className="p-4">
+                          <span className="px-2 py-1 rounded-full text-xs bg-primary/10 text-primary font-medium">
+                            {u.role}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              u.isActive
+                                ? 'bg-success/10 text-success'
+                                : 'bg-destructive/10 text-destructive'
+                            }`}
+                          >
+                            {u.isActive ? 'Aktif' : 'Nonaktif'}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEdit(u)}
+                              className="h-8 w-8"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(u)}
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
-              {filteredUsers.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  Tidak ada user ditemukan
-                </div>
-              )}
             </div>
+
+            {/* Pagination */}
+            {pagination.totalPages > 1 && (
+              <div className="mt-6">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (pagination.hasPrev) {
+                            setCurrentPage(currentPage - 1);
+                          }
+                        }}
+                        className={!pagination.hasPrev ? 'pointer-events-none opacity-50' : ''}
+                      />
+                    </PaginationItem>
+                    {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                      .filter((page) => {
+                        const current = pagination.page;
+                        return (
+                          page === 1 ||
+                          page === pagination.totalPages ||
+                          (page >= current - 1 && page <= current + 1)
+                        );
+                      })
+                      .map((page, index, array) => (
+                        <React.Fragment key={page}>
+                          {index > 0 && array[index - 1] !== page - 1 && (
+                            <PaginationItem>
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          )}
+                          <PaginationItem>
+                            <PaginationLink
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setCurrentPage(page);
+                              }}
+                              isActive={pagination.page === page}
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        </React.Fragment>
+                      ))}
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (pagination.hasNext) {
+                            setCurrentPage(currentPage + 1);
+                          }
+                        }}
+                        className={!pagination.hasNext ? 'pointer-events-none opacity-50' : ''}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -394,4 +506,3 @@ export default function UserManagement() {
     </div>
   );
 }
-

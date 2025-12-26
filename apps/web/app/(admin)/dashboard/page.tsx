@@ -21,6 +21,15 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -39,6 +48,7 @@ import {
   Clock,
   Construction,
   Droplets,
+  Edit,
   FileText,
   Flame,
   MapPin,
@@ -48,7 +58,7 @@ import {
   UserPlus,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 interface DisasterReport {
@@ -101,6 +111,26 @@ export default function DashboardAdmin() {
   const [disasterTypeFilter, setDisasterTypeFilter] = useState<string>('all');
   const [roadTypeFilter, setRoadTypeFilter] = useState<string>('all');
 
+  // Pagination states
+  const [disasterPage, setDisasterPage] = useState(1);
+  const [roadPage, setRoadPage] = useState(1);
+  const [disasterPagination, setDisasterPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+    hasNext: false,
+    hasPrev: false,
+  });
+  const [roadPagination, setRoadPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+    hasNext: false,
+    hasPrev: false,
+  });
+
   // Dialog states
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<{
@@ -135,7 +165,13 @@ export default function DashboardAdmin() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      await Promise.all([loadDisasterReports(), loadRoadReports(), loadPetugasList(), loadUsers()]);
+      await Promise.all([
+        loadDashboardStats(),
+        loadDisasterReports(),
+        loadRoadReports(),
+        loadPetugasList(),
+        loadUsers(),
+      ]);
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('Gagal memuat data');
@@ -144,26 +180,60 @@ export default function DashboardAdmin() {
     }
   };
 
-  const loadDisasterReports = async () => {
+  const loadDashboardStats = async () => {
     try {
-      const res = await apiCall(API_ENDPOINTS.reports.disaster.list);
+      const res = await apiCall(API_ENDPOINTS.stats.dashboard);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setStats({
+          totalReports: data.data.totalReports || 0,
+          pendingReports: data.data.pendingReports || 0,
+          inProgressReports: data.data.inProgressReports || 0,
+          resolvedReports: data.data.resolvedReports || 0,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading dashboard stats:', error);
+    }
+  };
+
+  const loadDisasterReports = async (page: number = disasterPage) => {
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: '10',
+      });
+
+      if (statusFilter !== 'all') {
+        params.append('status', statusFilter);
+      }
+
+      if (disasterTypeFilter !== 'all') {
+        params.append('type', disasterTypeFilter);
+      }
+
+      const res = await apiCall(`${API_ENDPOINTS.reports.disaster.list}?${params.toString()}`);
       const data = await res.json();
       if (res.ok && data.success) {
         setDisasterReports(data.data || []);
-        updateStats(data.data || [], []);
+        if (data.pagination) {
+          setDisasterPagination(data.pagination);
+        }
       }
     } catch (error) {
       console.error('Error loading disaster reports:', error);
     }
   };
 
-  const loadRoadReports = async () => {
+  const loadRoadReports = async (page: number = roadPage) => {
     try {
-      const res = await apiCall(API_ENDPOINTS.reports.road.list);
+      const res = await apiCall(`${API_ENDPOINTS.reports.road.list}?page=${page}&limit=10`);
       const data = await res.json();
       if (res.ok && data.success) {
         setRoadReports(data.data || []);
-        updateStats(disasterReports, data.data || []);
+        if (data.pagination) {
+          setRoadPagination(data.pagination);
+        }
       }
     } catch (error) {
       console.error('Error loading road reports:', error);
@@ -194,15 +264,7 @@ export default function DashboardAdmin() {
     }
   };
 
-  const updateStats = (disasters: any[], roads: any[]) => {
-    const allReports = [...disasters, ...roads];
-    setStats({
-      totalReports: allReports.length,
-      pendingReports: allReports.filter((r) => r.status === 'pending').length,
-      inProgressReports: allReports.filter((r) => r.status === 'in_progress').length,
-      resolvedReports: allReports.filter((r) => r.status === 'resolved').length,
-    });
-  };
+  // Stats sekarang di-load dari API endpoint stats/dashboard
 
   const handleStatusChange = async (
     id: string,
@@ -225,6 +287,8 @@ export default function DashboardAdmin() {
 
       if (res.ok && data.success) {
         toast.success('Status diperbarui');
+        // Reload stats and reports
+        loadDashboardStats();
         if (type === 'disaster') {
           loadDisasterReports();
         } else {
@@ -264,6 +328,8 @@ export default function DashboardAdmin() {
         setAssignDialogOpen(false);
         setSelectedReport(null);
         setSelectedPetugasId('');
+        // Reload stats and reports
+        loadDashboardStats();
         if (selectedReport.type === 'disaster') {
           loadDisasterReports();
         } else {
@@ -297,6 +363,8 @@ export default function DashboardAdmin() {
 
       if (res.ok && data.success) {
         toast.success('Laporan berhasil dihapus');
+        // Reload stats and reports
+        loadDashboardStats();
         if (type === 'disaster') {
           loadDisasterReports();
         } else {
@@ -311,13 +379,7 @@ export default function DashboardAdmin() {
     }
   };
 
-  const filteredDisasterReports = useMemo(() => {
-    return disasterReports.filter((r) => {
-      const statusMatch = statusFilter === 'all' || r.status === statusFilter;
-      const typeMatch = disasterTypeFilter === 'all' || r.type === disasterTypeFilter;
-      return statusMatch && typeMatch;
-    });
-  }, [disasterReports, statusFilter, disasterTypeFilter]);
+  // Filter sekarang dilakukan di API, tidak perlu filteredDisasterReports
 
   const filteredRoadReports = useMemo(() => {
     return roadReports.filter((r) => {
@@ -327,16 +389,7 @@ export default function DashboardAdmin() {
     });
   }, [roadReports, statusFilter, roadTypeFilter]);
 
-  const disasterCounts = useMemo(
-    () => ({
-      flood: disasterReports.filter((r) => r.type === 'flood').length,
-      fire: disasterReports.filter((r) => r.type === 'fire').length,
-      landslide: disasterReports.filter((r) => r.type === 'landslide').length,
-      fallen_tree: disasterReports.filter((r) => r.type === 'fallen_tree').length,
-      other: disasterReports.filter((r) => r.type === 'other').length,
-    }),
-    [disasterReports]
-  );
+  // Hapus disasterCounts karena tidak perlu lagi
 
   const roadCounts = useMemo(
     () => ({
@@ -362,6 +415,16 @@ export default function DashboardAdmin() {
         return AlertTriangle;
     }
   };
+
+  // Reload reports when filters change
+  useEffect(() => {
+    if (mounted && !authLoading && isAuthenticated && user?.role === 'admin') {
+      setDisasterPage(1);
+      loadDisasterReports(1);
+      // Stats tetap di-load karena menggunakan total dari semua data, bukan hanya filtered
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter, disasterTypeFilter]);
 
   if (!mounted || authLoading) {
     return (
@@ -425,86 +488,50 @@ export default function DashboardAdmin() {
 
         {/* DISASTER REPORTS */}
         <TabsContent value="disaster" className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-5">
-            <Card
-              className={`cursor-pointer transition-all hover:shadow-md ${
-                disasterTypeFilter === 'all' ? 'ring-2 ring-primary' : ''
-              }`}
-              onClick={() => setDisasterTypeFilter('all')}
-            >
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <AlertTriangle className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{disasterReports.length}</p>
-                  <p className="text-sm text-muted-foreground">Semua</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {Object.entries(disasterCounts).map(([type, count]) => (
-              <Card
-                key={type}
-                className={`cursor-pointer transition-all hover:shadow-md ${
-                  disasterTypeFilter === type ? 'ring-2 ring-primary' : ''
-                }`}
-                onClick={() => setDisasterTypeFilter(type)}
-              >
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    {(() => {
-                      const Icon = getDisasterIcon(type as DisasterType);
-                      return <Icon className="h-5 w-5 text-primary" />;
-                    })()}
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{count}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {type === 'flood'
-                        ? 'Banjir'
-                        : type === 'fire'
-                          ? 'Kebakaran'
-                          : type === 'landslide'
-                            ? 'Longsor'
-                            : type === 'fallen_tree'
-                              ? 'Pohon Tumbang'
-                              : 'Lainnya'}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-row items-center justify-between gap-4">
               <CardTitle className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5" />
                 Laporan Bencana
               </CardTitle>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Filter Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Status</SelectItem>
-                  <SelectItem value="pending">Menunggu</SelectItem>
-                  <SelectItem value="verified">Terverifikasi</SelectItem>
-                  <SelectItem value="in_progress">Ditangani</SelectItem>
-                  <SelectItem value="resolved">Selesai</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select value={disasterTypeFilter} onValueChange={setDisasterTypeFilter}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Filter Jenis Bencana" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Jenis</SelectItem>
+                    <SelectItem value="flood">Banjir</SelectItem>
+                    <SelectItem value="fire">Kebakaran</SelectItem>
+                    <SelectItem value="landslide">Longsor</SelectItem>
+                    <SelectItem value="fallen_tree">Pohon Tumbang</SelectItem>
+                    <SelectItem value="earthquake">Gempa Bumi</SelectItem>
+                    <SelectItem value="other">Lainnya</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Filter Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Status</SelectItem>
+                    <SelectItem value="pending">Menunggu</SelectItem>
+                    <SelectItem value="verified">Terverifikasi</SelectItem>
+                    <SelectItem value="in_progress">Ditangani</SelectItem>
+                    <SelectItem value="resolved">Selesai</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </CardHeader>
             <CardContent>
-              {filteredDisasterReports.length === 0 ? (
+              {disasterReports.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>Tidak ada laporan untuk filter ini</p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {filteredDisasterReports.map((report) => {
+                  {disasterReports.map((report) => {
                     const Icon = getDisasterIcon(report.type);
                     return (
                       <div
@@ -551,9 +578,9 @@ export default function DashboardAdmin() {
                                   </span>
                                 )}
                                 {report.assignedTo && (
-                                  <span className="flex items-center gap-1">
+                                  <span className="flex items-center gap-1 text-primary">
                                     <UserPlus className="h-4 w-4" />
-                                    {report.assignedTo.name}
+                                    Petugas: {report.assignedTo.name} ({report.assignedTo.email})
                                   </span>
                                 )}
                                 <span className="flex items-center gap-1">
@@ -565,6 +592,16 @@ export default function DashboardAdmin() {
                           </div>
 
                           <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                router.push(`/dashboard/reports/disaster/${report.id}/edit`)
+                              }
+                            >
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit
+                            </Button>
                             <Dialog
                               open={assignDialogOpen && selectedReport?.id === report.id}
                               onOpenChange={(open) => {
@@ -657,6 +694,79 @@ export default function DashboardAdmin() {
                   })}
                 </div>
               )}
+
+              {/* Pagination */}
+              {disasterPagination.totalPages > 1 && (
+                <div className="mt-6">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (disasterPagination.hasPrev) {
+                              const newPage = disasterPage - 1;
+                              setDisasterPage(newPage);
+                              loadDisasterReports(newPage);
+                            }
+                          }}
+                          className={
+                            !disasterPagination.hasPrev ? 'pointer-events-none opacity-50' : ''
+                          }
+                        />
+                      </PaginationItem>
+                      {Array.from({ length: disasterPagination.totalPages }, (_, i) => i + 1)
+                        .filter((page) => {
+                          const current = disasterPagination.page;
+                          return (
+                            page === 1 ||
+                            page === disasterPagination.totalPages ||
+                            (page >= current - 1 && page <= current + 1)
+                          );
+                        })
+                        .map((page, index, array) => (
+                          <React.Fragment key={page}>
+                            {index > 0 && array[index - 1] !== page - 1 && (
+                              <PaginationItem>
+                                <PaginationEllipsis />
+                              </PaginationItem>
+                            )}
+                            <PaginationItem>
+                              <PaginationLink
+                                href="#"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setDisasterPage(page);
+                                  loadDisasterReports(page);
+                                }}
+                                isActive={disasterPagination.page === page}
+                              >
+                                {page}
+                              </PaginationLink>
+                            </PaginationItem>
+                          </React.Fragment>
+                        ))}
+                      <PaginationItem>
+                        <PaginationNext
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (disasterPagination.hasNext) {
+                              const newPage = disasterPage + 1;
+                              setDisasterPage(newPage);
+                              loadDisasterReports(newPage);
+                            }
+                          }}
+                          className={
+                            !disasterPagination.hasNext ? 'pointer-events-none opacity-50' : ''
+                          }
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -732,9 +842,9 @@ export default function DashboardAdmin() {
                                 </span>
                               )}
                               {report.assignedTo && (
-                                <span className="flex items-center gap-1">
+                                <span className="flex items-center gap-1 text-primary">
                                   <UserPlus className="h-4 w-4" />
-                                  {report.assignedTo.name}
+                                  Petugas: {report.assignedTo.name} ({report.assignedTo.email})
                                 </span>
                               )}
                               <span className="flex items-center gap-1">
@@ -746,6 +856,14 @@ export default function DashboardAdmin() {
                         </div>
 
                         <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => router.push(`/dashboard/reports/road/${report.id}/edit`)}
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit
+                          </Button>
                           <Dialog
                             open={assignDialogOpen && selectedReport?.id === report.id}
                             onOpenChange={(open) => {
@@ -835,6 +953,79 @@ export default function DashboardAdmin() {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* Pagination */}
+              {roadPagination.totalPages > 1 && (
+                <div className="mt-6">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (roadPagination.hasPrev) {
+                              const newPage = roadPage - 1;
+                              setRoadPage(newPage);
+                              loadRoadReports(newPage);
+                            }
+                          }}
+                          className={
+                            !roadPagination.hasPrev ? 'pointer-events-none opacity-50' : ''
+                          }
+                        />
+                      </PaginationItem>
+                      {Array.from({ length: roadPagination.totalPages }, (_, i) => i + 1)
+                        .filter((page) => {
+                          const current = roadPagination.page;
+                          return (
+                            page === 1 ||
+                            page === roadPagination.totalPages ||
+                            (page >= current - 1 && page <= current + 1)
+                          );
+                        })
+                        .map((page, index, array) => (
+                          <React.Fragment key={page}>
+                            {index > 0 && array[index - 1] !== page - 1 && (
+                              <PaginationItem>
+                                <PaginationEllipsis />
+                              </PaginationItem>
+                            )}
+                            <PaginationItem>
+                              <PaginationLink
+                                href="#"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setRoadPage(page);
+                                  loadRoadReports(page);
+                                }}
+                                isActive={roadPagination.page === page}
+                              >
+                                {page}
+                              </PaginationLink>
+                            </PaginationItem>
+                          </React.Fragment>
+                        ))}
+                      <PaginationItem>
+                        <PaginationNext
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (roadPagination.hasNext) {
+                              const newPage = roadPage + 1;
+                              setRoadPage(newPage);
+                              loadRoadReports(newPage);
+                            }
+                          }}
+                          className={
+                            !roadPagination.hasNext ? 'pointer-events-none opacity-50' : ''
+                          }
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
                 </div>
               )}
             </CardContent>

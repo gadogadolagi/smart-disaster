@@ -143,6 +143,8 @@ importers:
         specifier: 5.5.4
         version: 5.5.4
 
+  apps/service-ai: {}
+
   apps/web:
     dependencies:
       '@hookform/resolvers':
@@ -265,6 +267,9 @@ importers:
       react-dom:
         specifier: ^19.2.0
         version: 19.2.0(react@19.2.0)
+      react-geolocated:
+        specifier: ^4.4.0
+        version: 4.4.0(react@19.2.0)
       react-hook-form:
         specifier: ^7.69.0
         version: 7.69.0(react@19.2.0)
@@ -4494,6 +4499,11 @@ packages:
     resolution: {integrity: sha512-UlbRu4cAiGaIewkPyiRGJk0imDN2T3JjieT6spoL2UeSf5od4n5LB/mQ4ejmxhCFT1tYe8IvaFulzynWovsEFQ==}
     peerDependencies:
       react: ^19.2.0
+
+  react-geolocated@4.4.0:
+    resolution: {integrity: sha512-FkNa2O6AhFYblK3tXEnmhqiubvjuMuiiDd2Semfw16eSNwX5OqB91+0HP4iyHn+ciGoFuK4yVGJ9fHQUlhz/8g==}
+    peerDependencies:
+      react: '>= 16.8.0 < 20.0.0'
 
   react-hook-form@7.69.0:
     resolution: {integrity: sha512-yt6ZGME9f4F6WHwevrvpAjh42HMvocuSnSIHUGycBqXIJdhqGSPQzTpGF+1NLREk/58IdPxEMfPcFCjlMhclGw==}
@@ -10091,6 +10101,10 @@ snapshots:
     dependencies:
       react: 19.2.0
       scheduler: 0.27.0
+
+  react-geolocated@4.4.0(react@19.2.0):
+    dependencies:
+      react: 19.2.0
 
   react-hook-form@7.69.0(react@19.2.0):
     dependencies:

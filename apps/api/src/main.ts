@@ -21,6 +21,7 @@ import potholeRoutes from './routes/pothole.routes';
 import assignmentRoutes from './routes/assignment.routes';
 import activityRoutes from './routes/activity.routes';
 import commentRoutes from './routes/comment.routes';
+import statsRoutes from './routes/stats.routes';
 
 // Import swagger setup
 import { setupSwagger } from './config/swagger';
@@ -180,6 +181,7 @@ app.use('/api/pothole', potholeRoutes);
 app.use('/api/assignments', assignmentRoutes);
 app.use('/api/activities', activityRoutes);
 app.use('/api/comments', commentRoutes);
+app.use('/api/stats', statsRoutes);
 
 // ============================================
 // Error Handling

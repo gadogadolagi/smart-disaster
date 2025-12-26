@@ -17,6 +17,18 @@ function getRandomNumber(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+// Helper function untuk mendapatkan tanggal random dalam range (hari ini mundur ke belakang)
+function getRandomDate(daysBack: number = 30): Date {
+  const now = new Date();
+  const daysAgo = Math.floor(Math.random() * daysBack);
+  const date = new Date(now);
+  date.setDate(date.getDate() - daysAgo);
+  // Random jam dalam sehari
+  date.setHours(Math.floor(Math.random() * 24));
+  date.setMinutes(Math.floor(Math.random() * 60));
+  return date;
+}
+
 async function main() {
   console.log('🌱 Starting seed...');
 
@@ -117,7 +129,7 @@ async function main() {
   console.log(`✅ Created ${users.length} users (1 admin, 3 petugas, ${userNames.length} users)`);
 
   // ============================================
-  // IMAGE PATHS FROM UPLOADS/EXAMPLE
+  // IMAGE PATHS FROM UPLOADS/EXAMPLES
   // ============================================
   const floodImages = [
     '/uploads/examples/banjir _seatap.webp',
@@ -140,7 +152,7 @@ async function main() {
   ];
 
   // ============================================
-  // CREATE DISASTER REPORTS
+  // CREATE DISASTER REPORTS (50 reports)
   // ============================================
   console.log('🌊 Creating disaster reports...');
 
@@ -156,6 +168,8 @@ async function main() {
         'Banjir di Area Komersial',
         'Genangan Tinggi di Perumahan',
         'Banjir Akibat Hujan Deras',
+        'Banjir di Jalan Utama',
+        'Genangan Air di Permukiman',
       ],
       descriptions: [
         'Banjir terjadi akibat hujan deras yang berlangsung selama 3 jam. Air mencapai ketinggian 50cm dan menggenangi beberapa rumah.',
@@ -166,6 +180,8 @@ async function main() {
         'Banjir di area komersial menyebabkan beberapa toko terendam.',
         'Genangan air tinggi di perumahan, warga kesulitan keluar masuk rumah.',
         'Banjir terjadi akibat hujan deras yang berlangsung sepanjang malam.',
+        'Banjir di jalan utama mengganggu lalu lintas kendaraan.',
+        'Genangan air di permukiman warga, beberapa rumah terendam.',
       ],
       districts: [
         'Jakarta Pusat',
@@ -183,6 +199,8 @@ async function main() {
         'Area Komersial Kemang',
         'Perumahan Bintaro',
         'Jalan Raya Cikarang',
+        'Jalan Raya Bogor',
+        'Perumahan Cibubur',
       ],
       riskLevels: ['low', 'medium', 'high', 'critical'] as const,
       urgencyRange: { min: 20, max: 95 },
@@ -196,6 +214,8 @@ async function main() {
         'Kebakaran Lahan',
         'Kebakaran di Pabrik',
         'Kebakaran Rumah',
+        'Kebakaran di Gudang',
+        'Kebakaran di Toko',
       ],
       descriptions: [
         'Kebakaran terjadi di pasar tradisional akibat korsleting listrik. Api sudah mulai menyebar ke beberapa kios.',
@@ -204,6 +224,8 @@ async function main() {
         'Kebakaran lahan di area terbuka, asap tebal mengganggu visibilitas.',
         'Kebakaran terjadi di pabrik, tim pemadam kebakaran sedang menuju lokasi.',
         'Kebakaran terjadi di rumah warga, api sudah mulai menyebar ke rumah tetangga.',
+        'Kebakaran terjadi di gudang, material mudah terbakar membuat api cepat menyebar.',
+        'Kebakaran terjadi di toko, api sudah mulai menyebar ke toko sebelah.',
       ],
       districts: ['Jakarta Pusat', 'Jakarta Selatan', 'Jakarta Barat', 'Jakarta Timur'],
       addresses: [
@@ -213,6 +235,8 @@ async function main() {
         'Lahan Kosong Cakung',
         'Pabrik Cikarang',
         'Perumahan Bintaro',
+        'Gudang Cakung',
+        'Area Komersial Kemang',
       ],
       riskLevels: ['medium', 'high', 'critical'] as const,
       urgencyRange: { min: 60, max: 100 },
@@ -224,12 +248,14 @@ async function main() {
         'Pohon Besar Tumbang',
         'Batang Pohon Menghalangi Jalan',
         'Pohon Tumbang di Perumahan',
+        'Pohon Tumbang Menimpa Rumah',
       ],
       descriptions: [
         'Pohon besar tumbang akibat angin kencang dan menutupi jalan raya. Lalu lintas terhambat.',
         'Pohon besar tumbang di pinggir jalan, menghalangi akses kendaraan.',
         'Batang pohon besar menghalangi jalan, perlu segera dibersihkan.',
         'Pohon tumbang di perumahan, menimpa pagar rumah warga.',
+        'Pohon tumbang menimpa rumah warga, struktur rumah rusak.',
       ],
       districts: ['Jakarta Selatan', 'Jakarta Pusat', 'Jakarta Barat'],
       addresses: [
@@ -237,6 +263,7 @@ async function main() {
         'Jalan Rasuna Said',
         'Jalan Kemang Raya',
         'Perumahan Bintaro',
+        'Jalan Raya Depok',
       ],
       riskLevels: ['low', 'medium', 'high'] as const,
       urgencyRange: { min: 30, max: 70 },
@@ -254,6 +281,59 @@ async function main() {
       riskLevels: ['low', 'medium'] as const,
       urgencyRange: { min: 40, max: 70 },
     },
+    {
+      type: 'landslide' as const,
+      titles: [
+        'Longsor di Permukiman',
+        'Tanah Longsor di Jalan',
+        'Longsor Menutupi Jalan',
+        'Longsor di Area Perbukitan',
+      ],
+      descriptions: [
+        'Longsor terjadi di permukiman, beberapa rumah terancam.',
+        'Tanah longsor di jalan, lalu lintas terhambat.',
+        'Longsor menutupi jalan, perlu pembersihan segera.',
+        'Longsor di area perbukitan, material tanah menutupi jalan.',
+      ],
+      districts: ['Jakarta Selatan', 'Jakarta Barat'],
+      addresses: [
+        'Perumahan Bintaro',
+        'Jalan Raya Depok',
+        'Area Perbukitan',
+        'Jalan Raya Bogor',
+      ],
+      riskLevels: ['medium', 'high'] as const,
+      urgencyRange: { min: 50, max: 85 },
+    },
+    {
+      type: 'other' as const,
+      titles: [
+        'Bencana Lainnya di Jakarta',
+        'Kejadian Darurat',
+        'Situasi Darurat',
+        'Bencana Tidak Terkategorikan',
+      ],
+      descriptions: [
+        'Terjadi bencana yang tidak dapat dikategorikan dengan jelas.',
+        'Kejadian darurat memerlukan penanganan segera.',
+        'Situasi darurat di lokasi tersebut.',
+        'Bencana yang memerlukan penanganan khusus.',
+      ],
+      districts: [
+        'Jakarta Pusat',
+        'Jakarta Selatan',
+        'Jakarta Barat',
+        'Jakarta Timur',
+      ],
+      addresses: [
+        'Jakarta Pusat',
+        'Jakarta Selatan',
+        'Jakarta Barat',
+        'Jakarta Timur',
+      ],
+      riskLevels: ['low', 'medium', 'high'] as const,
+      urgencyRange: { min: 30, max: 80 },
+    },
   ];
 
   const disasterReports = [];
@@ -264,8 +344,8 @@ async function main() {
     'resolved',
   ];
 
-  // Create 25 disaster reports
-  for (let i = 0; i < 25; i++) {
+  // Create 50 disaster reports dengan variasi tanggal (30 hari terakhir)
+  for (let i = 0; i < 50; i++) {
     const template = getRandomItem(disasterTemplates);
     const title = getRandomItem(template.titles);
     const description = getRandomItem(template.descriptions);
@@ -283,12 +363,14 @@ async function main() {
     const assignedPetugas =
       status !== 'pending' && Math.random() > 0.3 ? getRandomItem(petugas) : null;
 
-    // Images untuk flood dan fire
+    // Images untuk flood dan fire (reuse gambar yang sama)
     const images: string[] = [];
     if (template.type === 'flood' && Math.random() > 0.3) {
-      images.push(getRandomItem(floodImages));
+      // Reuse gambar dengan pattern: gunakan gambar pertama untuk 40% laporan, kedua untuk 30%, ketiga untuk 30%
+      const imageIndex = Math.random() < 0.4 ? 0 : Math.random() < 0.7 ? 1 : 2;
+      images.push(floodImages[imageIndex]!);
     } else if (template.type === 'fire' && Math.random() > 0.3) {
-      images.push(getRandomItem(fireImages));
+      images.push(fireImages[0]!);
     }
 
     // Notes untuk reports yang sudah ditangani
@@ -301,10 +383,13 @@ async function main() {
       notes = 'Laporan telah diverifikasi dan sedang dalam proses penanganan.';
     }
 
+    // Random date dalam 30 hari terakhir
+    const createdAt = getRandomDate(30);
+
     const report = await prisma.disasterReport.create({
       data: {
         type: template.type,
-        title: `${title} ${i > 0 ? `#${i + 1}` : ''}`,
+        title: `${title}${i > 0 ? ` #${i + 1}` : ''}`,
         description,
         address: `${address}, ${district}`,
         lat: -6.1 + Math.random() * 0.3, // Random lat di sekitar Jakarta
@@ -320,6 +405,8 @@ async function main() {
         handledBy: assignedPetugas?.id || null,
         notes,
         images,
+        createdAt,
+        updatedAt: createdAt,
       },
     });
 
@@ -329,7 +416,7 @@ async function main() {
   console.log(`✅ Created ${disasterReports.length} disaster reports`);
 
   // ============================================
-  // CREATE ROAD REPORTS
+  // CREATE ROAD REPORTS (50 reports)
   // ============================================
   console.log('🛣️  Creating road reports...');
 
@@ -341,12 +428,16 @@ async function main() {
         'Banyak Lubang Kecil di Jalan',
         'Lubang Dalam di Jalan',
         'Lubang Berbahaya di Jalan',
+        'Lubang di Jalan Utama',
+        'Lubang Parah di Jalan',
       ],
       descriptions: [
         'Lubang besar dengan diameter sekitar 1 meter dan kedalaman 30cm di tengah jalan. Sangat berbahaya untuk kendaraan.',
         'Banyak lubang kecil di sepanjang jalan. Perlu perbaikan menyeluruh.',
         'Lubang dalam ditemukan di jalan, sangat berbahaya untuk kendaraan.',
         'Lubang berbahaya di jalan raya, beberapa kendaraan sudah mengalami kerusakan.',
+        'Lubang di jalan utama mengganggu lalu lintas.',
+        'Lubang parah di jalan, sangat berbahaya untuk kendaraan.',
       ],
       dangerLevels: ['minor', 'moderate', 'severe'] as const,
       urgencyRange: { min: 40, max: 90 },
@@ -420,8 +511,8 @@ async function main() {
 
   const roadReports = [];
 
-  // Create 25 road reports
-  for (let i = 0; i < 25; i++) {
+  // Create 50 road reports dengan variasi tanggal (30 hari terakhir)
+  for (let i = 0; i < 50; i++) {
     const template = getRandomItem(roadTemplates);
     const title = getRandomItem(template.titles);
     const description = getRandomItem(template.descriptions);
@@ -439,14 +530,17 @@ async function main() {
     const assignedPetugas =
       status !== 'pending' && Math.random() > 0.3 ? getRandomItem(petugas) : null;
 
-    // Always use images for road reports (random from road images)
+    // Reuse gambar yang sama (80% memiliki gambar, gunakan gambar yang sama untuk beberapa laporan)
     const images: string[] = [];
     if (Math.random() > 0.2) {
       // 80% chance to have image
-      images.push(getRandomItem(roadImages));
+      // Reuse gambar dengan pattern: gunakan gambar pertama untuk 20% laporan, kedua untuk 15%, dst
+      const imageIndex = Math.floor(Math.random() * roadImages.length);
+      images.push(roadImages[imageIndex]!);
       if (Math.random() > 0.7) {
         // 30% chance to have second image
-        images.push(getRandomItem(roadImages));
+        const secondImageIndex = Math.floor(Math.random() * roadImages.length);
+        images.push(roadImages[secondImageIndex]!);
       }
     }
 
@@ -468,10 +562,13 @@ async function main() {
       }
     }
 
+    // Random date dalam 30 hari terakhir
+    const createdAt = getRandomDate(30);
+
     const report = await prisma.roadReport.create({
       data: {
         type: template.type,
-        title: `${title} ${i > 0 ? `#${i + 1}` : ''}`,
+        title: `${title}${i > 0 ? ` #${i + 1}` : ''}`,
         description,
         address: `${address}, ${district}`,
         lat: -6.1 + Math.random() * 0.3,
@@ -488,6 +585,8 @@ async function main() {
         aiConfidence,
         aiRecommendedAction,
         images,
+        createdAt,
+        updatedAt: createdAt,
       },
     });
 
@@ -514,8 +613,8 @@ async function main() {
 
   let commentCount = 0;
 
-  // Add comments to random reports
-  for (let i = 0; i < 40; i++) {
+  // Add comments to random reports (lebih banyak comments untuk 100 reports)
+  for (let i = 0; i < 80; i++) {
     const isDisaster = Math.random() > 0.5;
     const reports = isDisaster ? disasterReports : roadReports;
     const report = getRandomItem(reports);
@@ -564,6 +663,7 @@ async function main() {
             assignedToId: assignedPetugas.id,
           },
           images: [],
+          createdAt: report.createdAt,
         },
       });
       activityCount++;
@@ -572,6 +672,10 @@ async function main() {
     // Status change activity
     if (report.status === 'verified' || report.status === 'in_progress') {
       const changer = getRandomItem([...petugas, admin]);
+      // Activity terjadi setelah report dibuat (1-5 hari kemudian)
+      const activityDate = new Date(report.createdAt);
+      activityDate.setDate(activityDate.getDate() + getRandomNumber(1, 5));
+
       await prisma.reportActivity.create({
         data: {
           reportId: report.id,
@@ -585,6 +689,7 @@ async function main() {
             newStatus: report.status,
           },
           images: [],
+          createdAt: activityDate,
         },
       });
       activityCount++;
@@ -593,6 +698,10 @@ async function main() {
     // Resolved activity
     if (report.status === 'resolved') {
       const resolver = getRandomItem([...petugas, admin]);
+      // Activity terjadi setelah status changed (3-10 hari kemudian)
+      const activityDate = new Date(report.createdAt);
+      activityDate.setDate(activityDate.getDate() + getRandomNumber(5, 15));
+
       await prisma.reportActivity.create({
         data: {
           reportId: report.id,
@@ -605,6 +714,7 @@ async function main() {
             resolution: 'Masalah sudah ditangani dan selesai.',
           },
           images: [],
+          createdAt: activityDate,
         },
       });
       activityCount++;
@@ -621,8 +731,16 @@ async function main() {
   console.log(`   - Users: ${users.length} (1 admin, 3 petugas, ${userNames.length} users)`);
   console.log(`   - Disaster Reports: ${disasterReports.length}`);
   console.log(`   - Road Reports: ${roadReports.length}`);
+  console.log(`   - Total Reports: ${disasterReports.length + roadReports.length}`);
   console.log(`   - Comments: ${commentCount}`);
   console.log(`   - Activities: ${activityCount}`);
+  console.log('\n📅 Date Range:');
+  const allReports = [...disasterReports, ...roadReports];
+  const dates = allReports.map((r) => r.createdAt).sort((a, b) => a.getTime() - b.getTime());
+  if (dates.length > 0) {
+    console.log(`   - Earliest: ${dates[0]!.toLocaleDateString('id-ID')}`);
+    console.log(`   - Latest: ${dates[dates.length - 1]!.toLocaleDateString('id-ID')}`);
+  }
   console.log('\n🔑 Test Credentials:');
   console.log('   Admin:');
   console.log('     Email: admin@example.com');

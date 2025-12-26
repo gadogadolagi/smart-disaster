@@ -132,7 +132,7 @@ export default function Home() {
                     </Link>
                   </>
                 ) : isGovernment ? (
-                  <Link href="/dashboardadmin">
+                  <Link href="/dashboard">
                     <Button size="lg" className="gap-2 shadow-lg shadow-primary/25">
                       <Shield className="w-5 h-5" />
                       Buka Dashboard Admin
