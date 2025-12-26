@@ -1,135 +1,259 @@
-# Turborepo starter
+# UHTP Smart Disaster
 
-This Turborepo starter is maintained by the Turborepo core team.
+Sistem cerdas untuk pelaporan dan monitoring bencana alam yang dilengkapi dengan prediksi berbasis AI untuk membantu penanganan bencana yang lebih efektif.
 
-## Using this example
+## 📋 Deskripsi
 
-Run the following command:
+UHTP Smart Disaster adalah platform komprehensif yang memungkinkan masyarakat untuk melaporkan berbagai jenis bencana alam seperti banjir, kebakaran, dan kerusakan jalan. Sistem ini dilengkapi dengan fitur prediksi berbasis AI untuk membantu pemerintah dan pihak terkait dalam mengambil keputusan yang lebih cepat dan tepat dalam penanganan bencana.
 
-```sh
-npx create-turbo@latest
-```
+### Fitur Utama
 
-## What's inside?
+- 🚨 **Pelaporan Bencana**: Sistem pelaporan bencana yang mudah digunakan untuk berbagai jenis bencana
+- 🛣️ **Pelaporan Jalan**: Pelaporan kondisi jalan dan lubang (potholes) dengan deteksi otomatis menggunakan AI
+- 📊 **Monitoring Real-time**: Dashboard monitoring untuk melihat status dan perkembangan bencana
+- 🔮 **Prediksi AI**:
+  - Prediksi risiko banjir (Flood Risk Prediction)
+  - Prediksi kebakaran (Fire Prediction)
+  - Deteksi kerusakan jalan otomatis
+- 👥 **Manajemen Pengguna**: Sistem autentikasi dan manajemen pengguna dengan role-based access
+- 💬 **Sistem Komentar**: Fitur komentar dan diskusi pada laporan bencana
+- 📝 **Assignment**: Sistem penugasan untuk menangani laporan bencana
+- 📈 **Dashboard Admin**: Panel administrasi untuk mengelola seluruh sistem
 
-This Turborepo includes the following packages/apps:
+## 🏗️ Arsitektur
 
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
+Proyek ini menggunakan arsitektur monorepo dengan tiga aplikasi utama:
 
 ```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+uhtp-smart-disaster/
+├── apps/
+│   ├── api/          # Backend API (NestJS)
+│   ├── web/          # Frontend Web (Next.js)
+│   └── service-ai/   # AI Service (Python)
+└── packages/         # Shared packages & configs
 ```
 
-You can build a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+## 🛠️ Tech Stack
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
+### Backend API (`apps/api`)
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
+- **Framework**: NestJS
+- **Language**: TypeScript
+- **Database**: Prisma ORM
+- **Authentication**: JWT-based authentication
+- **File Upload**: Multer untuk handling file uploads
+- **Logging**: Winston logger
+- **Testing**: Jest
 
-### Develop
+### Frontend Web (`apps/web`)
 
-To develop all apps and packages, run the following command:
+- **Framework**: Next.js 14+ (App Router)
+- **Language**: TypeScript
+- **UI Library**: React
+- **Styling**: Tailwind CSS
+- **UI Components**: shadcn/ui
+- **State Management**: React Context API
 
-```
-cd my-turborepo
+### AI Service (`apps/service-ai`)
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
+- **Language**: Python
+- **ML Framework**: TensorFlow/PyTorch (untuk model deteksi)
+- **API**: FastAPI/Flask (untuk service endpoint)
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
-```
+### Development Tools
 
-You can develop a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+- **Package Manager**: pnpm
+- **Monorepo**: Turborepo
+- **Linting**: ESLint
+- **Code Formatting**: Prettier
+- **TypeScript Config**: Shared TypeScript configurations
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
+## 📦 Packages
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
+Proyek ini menggunakan shared packages untuk konsistensi:
 
-### Remote Caching
+- `@repo/eslint-config`: Shared ESLint configurations
+- `@repo/jest-config`: Shared Jest configurations
+- `@repo/typescript-config`: Shared TypeScript configurations
+- `@repo/ui`: Shared UI components
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+## 🚀 Getting Started
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+### Prerequisites
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+- Node.js (v18 atau lebih tinggi)
+- pnpm (v8 atau lebih tinggi)
+- Python 3.8+ (untuk AI service)
+- PostgreSQL atau database yang didukung Prisma
 
-```
-cd my-turborepo
+### Installation
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
+1. Clone repository:
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
+```bash
+git clone <repository-url>
+cd uhtp-smart-disaster
 ```
 
-## Useful Links
+2. Install dependencies:
 
-Learn more about the power of Turborepo:
+```bash
+pnpm install
+```
 
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+3. Setup environment variables:
+
+```bash
+# Copy .env.example files di masing-masing app
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env
+cp apps/service-ai/.env.example apps/service-ai/.env
+```
+
+4. Setup database:
+
+```bash
+cd apps/api
+npx prisma generate
+npx prisma migrate dev
+```
+
+5. Install Python dependencies (untuk AI service):
+
+```bash
+cd apps/service-ai
+pip install -r requirements.txt
+```
+
+### Running the Project
+
+#### Development Mode
+
+Jalankan semua aplikasi secara bersamaan:
+
+```bash
+pnpm dev
+```
+
+Atau jalankan secara terpisah:
+
+**Backend API:**
+
+```bash
+cd apps/api
+pnpm dev
+```
+
+**Frontend Web:**
+
+```bash
+cd apps/web
+pnpm dev
+```
+
+**AI Service:**
+
+```bash
+cd apps/service-ai
+python main.py
+```
+
+#### Production Build
+
+```bash
+# Build semua aplikasi
+pnpm build
+
+# Run production
+pnpm start
+```
+
+## 📁 Struktur Proyek
+
+```
+uhtp-smart-disaster/
+├── apps/
+│   ├── api/                    # Backend API
+│   │   ├── src/
+│   │   │   ├── controllers/   # Route controllers
+│   │   │   ├── services/      # Business logic
+│   │   │   ├── routes/        # API routes
+│   │   │   ├── middleware/    # Custom middleware
+│   │   │   └── utils/         # Utility functions
+│   │   ├── prisma/            # Database schema & migrations
+│   │   └── models/            # ML models
+│   │
+│   ├── web/                    # Frontend Web
+│   │   ├── app/               # Next.js app directory
+│   │   ├── components/        # React components
+│   │   ├── contexts/          # React contexts
+│   │   └── lib/               # Utility libraries
+│   │
+│   └── service-ai/             # AI Service
+│       ├── main.py            # Main service file
+│       └── train.py           # Model training script
+│
+└── packages/                   # Shared packages
+    ├── eslint-config/         # ESLint configs
+    ├── jest-config/           # Jest configs
+    ├── typescript-config/      # TypeScript configs
+    └── ui/                     # Shared UI components
+```
+
+## 🔌 API Endpoints
+
+API utama tersedia di `apps/api`. Beberapa endpoint utama:
+
+- `/api/auth` - Autentikasi pengguna
+- `/api/reports` - Manajemen laporan bencana
+- `/api/activities` - Tracking aktivitas
+- `/api/assignments` - Sistem penugasan
+- `/api/comments` - Sistem komentar
+- `/api/ai-prediction` - Prediksi berbasis AI
+
+## 🤖 AI Features
+
+Sistem AI menyediakan:
+
+1. **Deteksi Lubang Jalan**: Deteksi otomatis lubang di jalan menggunakan image recognition
+2. **Prediksi Risiko Banjir**: Analisis data untuk memprediksi risiko banjir
+3. **Prediksi Kebakaran**: Prediksi potensi kebakaran berdasarkan data historis
+
+## 🧪 Testing
+
+```bash
+# Run tests untuk semua packages
+pnpm test
+
+# Run tests untuk specific app
+cd apps/api && pnpm test
+cd apps/web && pnpm test
+```
+
+## 📝 Scripts
+
+- `pnpm dev` - Jalankan semua aplikasi dalam mode development
+- `pnpm build` - Build semua aplikasi untuk production
+- `pnpm lint` - Lint semua packages
+- `pnpm test` - Run semua tests
+- `pnpm clean` - Clean build artifacts
+
+## 🤝 Contributing
+
+1. Fork repository
+2. Create feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Open Pull Request
+
+## 📄 License
+
+[Specify your license here]
+
+## 👥 Authors
+
+[Specify authors here]
+
+## 🙏 Acknowledgments
+
+[Any acknowledgments]
