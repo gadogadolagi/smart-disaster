@@ -66,9 +66,12 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  disasterReports DisasterReport[]
-  roadReports     RoadReport[]
+  disasterReports DisasterReport[] @relation("ReportedDisasters")
+  roadReports     RoadReport[]     @relation("ReportedRoads")
+  assignedDisasters DisasterReport[] @relation("AssignedDisasters")
+  assignedRoads     RoadReport[]     @relation("AssignedRoads")
   comments        Comment[]
+  activities      ReportActivity[]
   sessions        Session[]
 
   @@map("users")
@@ -101,18 +104,23 @@ model DisasterReport {
 
   // User relation (optional for anonymous reports)
   reportedById String?
-  reportedBy   User?   @relation(fields: [reportedById], references: [id], onDelete: SetNull)
+  reportedBy   User?   @relation("ReportedDisasters", fields: [reportedById], references: [id], onDelete: SetNull)
 
   // Anonymous reporter info (if no user logged in)
   reporterName  String?
   reporterPhone String?
+
+  // Assignment
+  assignedToId String?
+  assignedTo   User?   @relation("AssignedDisasters", fields: [assignedToId], references: [id], onDelete: SetNull)
 
   handledBy String?
   notes     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  comments Comment[]
+  comments      Comment[]
+  activities    ReportActivity[]
 
   @@map("disaster_reports")
 }
@@ -133,11 +141,15 @@ model RoadReport {
 
   // User relation (optional for anonymous reports)
   reportedById String?
-  reportedBy   User?   @relation(fields: [reportedById], references: [id], onDelete: SetNull)
+  reportedBy   User?   @relation("ReportedRoads", fields: [reportedById], references: [id], onDelete: SetNull)
 
   // Anonymous reporter info (if no user logged in)
   reporterName  String?
   reporterPhone String?
+
+  // Assignment
+  assignedToId String?
+  assignedTo   User?   @relation("AssignedRoads", fields: [assignedToId], references: [id], onDelete: SetNull)
 
   // AI Analysis fields (optional)
   aiDetectedIssues    String[]
@@ -147,7 +159,8 @@ model RoadReport {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  comments Comment[]
+  comments      Comment[]
+  activities    ReportActivity[]
 
   @@map("road_reports")
 }
@@ -166,4 +179,35 @@ model Comment {
   roadReportId     String?
 
   @@map("comments")
+}
+
+enum ActivityType {
+  assigned
+  status_changed
+  verified
+  in_progress
+  resolved
+  note_added
+  comment_added
+}
+
+model ReportActivity {
+  id               String          @id @default(cuid())
+  reportId         String
+  reportType       String // 'disaster' or 'road'
+  activityType     ActivityType
+  description      String
+  images           String[]        @default([]) // Optional images for activity log
+  metadata         Json?           // Additional data (e.g., old status, new status)
+  createdById      String
+  createdBy        User            @relation(fields: [createdById], references: [id])
+  createdAt        DateTime        @default(now())
+  DisasterReport   DisasterReport? @relation(fields: [disasterReportId], references: [id], onDelete: Cascade)
+  disasterReportId String?
+  RoadReport       RoadReport?     @relation(fields: [roadReportId], references: [id], onDelete: Cascade)
+  roadReportId     String?
+
+  @@map("report_activities")
+  @@index([reportId, reportType])
+  @@index([createdAt])
 }

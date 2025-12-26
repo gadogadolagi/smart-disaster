@@ -1,0 +1,1221 @@
+{
+  "info": {
+    "_postman_id": "uhtp-smart-disaster-api",
+    "name": "UHTP Smart Disaster API",
+    "description": "Koleksi Postman untuk semua endpoint API Smart Disaster Management System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Basic Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Basic health check endpoint"
+          }
+        },
+        {
+          "name": "Detailed Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/detailed",
+              "host": ["{{baseUrl}}"],
+              "path": ["health", "detailed"]
+            },
+            "description": "Detailed health check with database and memory status"
+          }
+        },
+        {
+          "name": "Readiness Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/ready",
+              "host": ["{{baseUrl}}"],
+              "path": ["health", "ready"]
+            },
+            "description": "Readiness check for container orchestrators"
+          }
+        },
+        {
+          "name": "Liveness Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/live",
+              "host": ["{{baseUrl}}"],
+              "path": ["health", "live"]
+            },
+            "description": "Liveness check for container orchestrators"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.data && jsonData.data.accessToken) {",
+                  "        pm.environment.set('accessToken', jsonData.data.accessToken);",
+                  "        pm.environment.set('refreshToken', jsonData.data.refreshToken);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"081234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "Register a new user"
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.data && jsonData.data.accessToken) {",
+                  "        pm.environment.set('accessToken', jsonData.data.accessToken);",
+                  "        pm.environment.set('refreshToken', jsonData.data.refreshToken);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login to get access token"
+          }
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
+            },
+            "description": "Get current user profile"
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe Updated\",\n  \"phone\": \"081234567891\",\n  \"avatar\": \"https://example.com/avatar.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "profile"]
+            },
+            "description": "Update current user profile"
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"password123\",\n  \"newPassword\": \"newpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "change-password"]
+            },
+            "description": "Change current user password"
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.data && jsonData.data.accessToken) {",
+                  "        pm.environment.set('accessToken', jsonData.data.accessToken);",
+                  "        pm.environment.set('refreshToken', jsonData.data.refreshToken);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "refresh"]
+            },
+            "description": "Refresh access token using refresh token"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            },
+            "description": "Logout and invalidate refresh token"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports - Disaster",
+      "item": [
+        {
+          "name": "Get All Disaster Reports",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/disaster?page=1&limit=10&status=pending&type=flood&district=Jakarta",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "disaster"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "description": "Filter by status: pending, verified, in_progress, resolved, rejected",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "flood",
+                  "description": "Filter by type: flood, fire, earthquake, landslide, fallen_tree, other",
+                  "disabled": true
+                },
+                {
+                  "key": "district",
+                  "value": "Jakarta",
+                  "description": "Filter by district",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all disaster reports with optional filters"
+          }
+        },
+        {
+          "name": "Get Disaster Report By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/disaster/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "disaster", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "report-id-here"
+                }
+              ]
+            },
+            "description": "Get disaster report by ID"
+          }
+        },
+        {
+          "name": "Create Disaster Report",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "type",
+                  "value": "flood",
+                  "type": "text",
+                  "description": "flood, fire, earthquake, landslide, fallen_tree, other"
+                },
+                {
+                  "key": "title",
+                  "value": "Banjir di Jalan Raya",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Banjir terjadi di jalan raya akibat hujan deras",
+                  "type": "text"
+                },
+                {
+                  "key": "address",
+                  "value": "Jalan Raya No. 123",
+                  "type": "text"
+                },
+                {
+                  "key": "district",
+                  "value": "Jakarta Selatan",
+                  "type": "text"
+                },
+                {
+                  "key": "lat",
+                  "value": "-6.2088",
+                  "type": "text"
+                },
+                {
+                  "key": "lng",
+                  "value": "106.8456",
+                  "type": "text"
+                },
+                {
+                  "key": "reporterName",
+                  "value": "John Doe",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "reporterPhone",
+                  "value": "081234567890",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": [],
+                  "description": "Up to 5 images (JPEG, PNG, WebP, GIF)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/disaster",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "disaster"]
+            },
+            "description": "Create a new disaster report"
+          }
+        },
+        {
+          "name": "Update Disaster Report",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"verified\",\n  \"riskLevel\": \"high\",\n  \"handledBy\": \"petugas-id-here\",\n  \"notes\": \"Report telah diverifikasi dan sedang ditangani\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/disaster/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "disaster", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "report-id-here"
+                }
+              ]
+            },
+            "description": "Update disaster report (admin or petugas only)"
+          }
+        },
+        {
+          "name": "Delete Disaster Report",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/disaster/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "disaster", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "report-id-here"
+                }
+              ]
+            },
+            "description": "Delete disaster report (admin only)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports - Road",
+      "item": [
+        {
+          "name": "Get All Road Reports",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/road?page=1&limit=10&status=pending&type=pothole&district=Jakarta",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "road"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "description": "Filter by status: pending, verified, in_progress, resolved, rejected",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "pothole",
+                  "description": "Filter by type: pothole, crack, landslide, flooding, bridge_damage",
+                  "disabled": true
+                },
+                {
+                  "key": "district",
+                  "value": "Jakarta",
+                  "description": "Filter by district",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all road damage reports with optional filters"
+          }
+        },
+        {
+          "name": "Get Road Report By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/road/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "road", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "report-id-here"
+                }
+              ]
+            },
+            "description": "Get road damage report by ID"
+          }
+        },
+        {
+          "name": "Create Road Report",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "type",
+                  "value": "pothole",
+                  "type": "text",
+                  "description": "pothole, crack, landslide, flooding, bridge_damage"
+                },
+                {
+                  "key": "title",
+                  "value": "Lubang di Jalan Raya",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Lubang besar di tengah jalan",
+                  "type": "text"
+                },
+                {
+                  "key": "address",
+                  "value": "Jalan Raya No. 123",
+                  "type": "text"
+                },
+                {
+                  "key": "district",
+                  "value": "Jakarta Selatan",
+                  "type": "text"
+                },
+                {
+                  "key": "lat",
+                  "value": "-6.2088",
+                  "type": "text"
+                },
+                {
+                  "key": "lng",
+                  "value": "106.8456",
+                  "type": "text"
+                },
+                {
+                  "key": "reporterName",
+                  "value": "John Doe",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "reporterPhone",
+                  "value": "081234567890",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": [],
+                  "description": "Up to 5 images (JPEG, PNG, WebP, GIF)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/road",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "road"]
+            },
+            "description": "Create a new road damage report"
+          }
+        },
+        {
+          "name": "Update Road Report",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"verified\",\n  \"dangerLevel\": \"high\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/road/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "road", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "report-id-here"
+                }
+              ]
+            },
+            "description": "Update road damage report (admin or petugas only)"
+          }
+        },
+        {
+          "name": "Delete Road Report",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/road/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "road", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "report-id-here"
+                }
+              ]
+            },
+            "description": "Delete road damage report (admin only)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users?page=1&limit=10&role=user&search=john",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "role",
+                  "value": "user",
+                  "description": "Filter by role: user, admin, petugas",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "john",
+                  "description": "Search by name or email",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all users (admin only)"
+          }
+        },
+        {
+          "name": "Get User By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "user-id-here"
+                }
+              ]
+            },
+            "description": "Get user by ID"
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe Updated\",\n  \"phone\": \"081234567891\",\n  \"role\": \"citizen\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "user-id-here"
+                }
+              ]
+            },
+            "description": "Update user"
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "user-id-here"
+                }
+              ]
+            },
+            "description": "Delete user (admin only)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pothole",
+      "item": [
+        {
+          "name": "Predict Pothole",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": [],
+                  "description": "Image file of pothole (JPEG, PNG, WebP, GIF)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/pothole/predict",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pothole", "predict"]
+            },
+            "description": "Predict pothole category from image"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assignments",
+      "item": [
+        {
+          "name": "Get Petugas List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/assignments/petugas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "assignments", "petugas"]
+            },
+            "description": "Get list of petugas (admin only)"
+          }
+        },
+        {
+          "name": "Assign Petugas to Disaster Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petugasId\": \"petugas-id-here\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/assignments/disaster/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "assignments", "disaster", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "report-id-here"
+                }
+              ]
+            },
+            "description": "Assign petugas to disaster report (admin only)"
+          }
+        },
+        {
+          "name": "Assign Petugas to Road Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petugasId\": \"petugas-id-here\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/assignments/road/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "assignments", "road", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "report-id-here"
+                }
+              ]
+            },
+            "description": "Assign petugas to road report (admin only)"
+          }
+        },
+        {
+          "name": "Get My Assigned Reports",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/assignments/my-reports?reportType=disaster",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "assignments", "my-reports"],
+              "query": [
+                {
+                  "key": "reportType",
+                  "value": "disaster",
+                  "description": "Filter by report type: disaster, road",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get reports assigned to current petugas (petugas only)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Activities",
+      "item": [
+        {
+          "name": "Get Report Activities",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/activities/report/:id?reportType=disaster",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "activities", "report", ":id"],
+              "query": [
+                {
+                  "key": "reportType",
+                  "value": "disaster",
+                  "description": "Type of report: disaster, road"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "report-id-here"
+                }
+              ]
+            },
+            "description": "Get all activities for a report"
+          }
+        },
+        {
+          "name": "Create Petugas Activity",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "reportType",
+                  "value": "disaster",
+                  "type": "text",
+                  "description": "disaster, road"
+                },
+                {
+                  "key": "description",
+                  "value": "Status report telah diubah menjadi verified",
+                  "type": "text"
+                },
+                {
+                  "key": "activityType",
+                  "value": "status_changed",
+                  "type": "text",
+                  "description": "status_changed, verified, in_progress, resolved, note_added"
+                },
+                {
+                  "key": "newStatus",
+                  "value": "verified",
+                  "type": "text",
+                  "description": "Required if activityType is status_changed: pending, verified, in_progress, resolved",
+                  "disabled": true
+                },
+                {
+                  "key": "metadata",
+                  "value": "{\"notes\": \"Additional notes\"}",
+                  "type": "text",
+                  "description": "Additional metadata as JSON string",
+                  "disabled": true
+                },
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": [],
+                  "description": "Optional images for activity log (max 5 images, 5MB each)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/activities/report/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "activities", "report", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "report-id-here"
+                }
+              ]
+            },
+            "description": "Create activity log for a report with optional images (petugas only)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comments",
+      "item": [
+        {
+          "name": "Create Comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reportId\": \"report-id-here\",\n  \"reportType\": \"disaster\",\n  \"content\": \"Ini adalah komentar saya tentang laporan ini\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "comments"]
+            },
+            "description": "Create a comment on a report"
+          }
+        },
+        {
+          "name": "Get Report Comments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/comments/report/:id?reportType=disaster&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "comments", "report", ":id"],
+              "query": [
+                {
+                  "key": "reportType",
+                  "value": "disaster",
+                  "description": "Type of report: disaster, road"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "report-id-here"
+                }
+              ]
+            },
+            "description": "Get comments for a report"
+          }
+        },
+        {
+          "name": "Update Comment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Komentar yang telah diupdate\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/comments/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "comments", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "comment-id-here"
+                }
+              ]
+            },
+            "description": "Update a comment (author only)"
+          }
+        },
+        {
+          "name": "Delete Comment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/comments/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "comments", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "comment-id-here"
+                }
+              ]
+            },
+            "description": "Delete a comment (author or admin only)"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
