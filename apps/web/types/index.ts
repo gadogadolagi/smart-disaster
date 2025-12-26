@@ -30,6 +30,12 @@ export interface DisasterReport {
   images: string[];
   status: ReportStatus;
   riskLevel: RiskLevel;
+  urgencyPercentage?: number; // Persentase tingkat bahaya/urgensi (0-100)
+  aiAnalysis?: {
+    detectedIssues: string[];
+    confidence: number;
+    recommendedAction: string;
+  };
   reportedBy: {
     id: string;
     name: string;
@@ -59,6 +65,7 @@ export interface RoadReport {
   images: string[];
   status: ReportStatus;
   dangerLevel: DangerLevel;
+  urgencyPercentage?: number; // Persentase tingkat bahaya/urgensi (0-100)
   aiAnalysis?: {
     detectedIssues: string[];
     confidence: number;

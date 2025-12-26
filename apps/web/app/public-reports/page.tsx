@@ -25,6 +25,7 @@ import { API_ENDPOINTS, getImageUrl } from '@/lib/api/config';
 import { DisasterReport, ReportComment, RoadReport } from '@/types';
 import {
   AlertTriangle,
+  Brain,
   Clock,
   Construction,
   Eye,
@@ -33,6 +34,7 @@ import {
   Search,
   Send,
   Shield,
+  TrendingUp,
   User,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -169,13 +171,38 @@ function DisasterReportCard({ report }: { report: DisasterReport }) {
             {report.images && report.images.length > 0 && (
               <div className="mb-3 rounded-lg overflow-hidden">
                 <img
-                  src={getImageUrl(report.images?.[0] || '')}
+                  src={getImageUrl(report.images[0] || '')}
                   alt={report.title}
                   className="w-full h-32 object-cover"
                 />
               </div>
             )}
             <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{report.description}</p>
+            {report.urgencyPercentage !== undefined && report.urgencyPercentage > 0 && (
+              <div className="mb-3 p-2 rounded-lg bg-accent/50 border">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" />
+                    Tingkat Urgensi
+                  </span>
+                  <span className="text-xs font-bold">{report.urgencyPercentage.toFixed(1)}%</span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div
+                    className={`h-2 rounded-full transition-all ${
+                      report.urgencyPercentage >= 80
+                        ? 'bg-destructive'
+                        : report.urgencyPercentage >= 60
+                          ? 'bg-orange-500'
+                          : report.urgencyPercentage >= 40
+                            ? 'bg-yellow-500'
+                            : 'bg-green-500'
+                    }`}
+                    style={{ width: `${Math.min(100, report.urgencyPercentage)}%` }}
+                  />
+                </div>
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <DisasterTypeBadge type={report.type} />
@@ -203,17 +230,90 @@ function DisasterReportCard({ report }: { report: DisasterReport }) {
             <RiskLevelBadge level={report.riskLevel} />
           </div>
 
+          {/* Urgency Percentage */}
+          {report.urgencyPercentage !== undefined && report.urgencyPercentage > 0 && (
+            <div className="p-4 rounded-lg bg-accent/50 border">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                <p className="font-semibold">Tingkat Urgensi Prediksi AI</p>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Persentase Urgensi</span>
+                  <span className="text-lg font-bold">{report.urgencyPercentage.toFixed(1)}%</span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-3">
+                  <div
+                    className={`h-3 rounded-full transition-all ${
+                      report.urgencyPercentage >= 80
+                        ? 'bg-destructive'
+                        : report.urgencyPercentage >= 60
+                          ? 'bg-orange-500'
+                          : report.urgencyPercentage >= 40
+                            ? 'bg-yellow-500'
+                            : 'bg-green-500'
+                    }`}
+                    style={{ width: `${Math.min(100, report.urgencyPercentage)}%` }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {report.urgencyPercentage >= 80
+                    ? 'Sangat Urgent - Perlu penanganan segera'
+                    : report.urgencyPercentage >= 60
+                      ? 'Urgent - Perlu perhatian segera'
+                      : report.urgencyPercentage >= 40
+                        ? 'Sedang - Perlu monitoring'
+                        : 'Rendah - Kondisi normal'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* AI Analysis */}
+          {report.aiAnalysis && (
+            <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+              <div className="flex items-center gap-2 mb-3">
+                <Brain className="h-5 w-5 text-primary" />
+                <p className="font-semibold">Analisis Machine Learning</p>
+              </div>
+              <div className="space-y-2 text-sm">
+                {report.aiAnalysis.detectedIssues &&
+                  report.aiAnalysis.detectedIssues.length > 0 && (
+                    <div>
+                      <p className="font-medium text-muted-foreground mb-1">Masalah Terdeteksi:</p>
+                      <ul className="list-disc list-inside space-y-1">
+                        {report.aiAnalysis.detectedIssues.map((issue, idx) => (
+                          <li key={idx}>{issue}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                <div>
+                  <p className="font-medium text-muted-foreground">Tingkat Kepercayaan:</p>
+                  <p>{Math.round((report.aiAnalysis.confidence || 0) * 100)}%</p>
+                </div>
+                {report.aiAnalysis.recommendedAction && (
+                  <div>
+                    <p className="font-medium text-muted-foreground">Rekomendasi:</p>
+                    <p>{report.aiAnalysis.recommendedAction}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Images Gallery */}
           {report.images && report.images.length > 0 && (
             <div>
               <p className="font-medium text-muted-foreground mb-2">Foto Bukti</p>
               <div className="grid grid-cols-2 gap-2">
                 {report.images.map((image, idx) => (
-                  <div key={idx} className="rounded-lg overflow-hidden">
+                  <div key={idx} className="rounded-lg overflow-hidden border">
                     <img
                       src={getImageUrl(image)}
                       alt={`${report.title} - Foto ${idx + 1}`}
-                      className="w-full h-32 object-cover"
+                      className="w-full h-32 object-cover hover:scale-105 transition-transform cursor-pointer"
+                      onClick={() => window.open(getImageUrl(image), '_blank')}
                     />
                   </div>
                 ))}
@@ -288,7 +388,41 @@ function RoadReportCard({ report }: { report: RoadReport }) {
             </div>
           </CardHeader>
           <CardContent>
+            {report.images && report.images.length > 0 && (
+              <div className="mb-3 rounded-lg overflow-hidden">
+                <img
+                  src={getImageUrl(report.images[0] || '')}
+                  alt={report.title}
+                  className="w-full h-32 object-cover"
+                />
+              </div>
+            )}
             <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{report.description}</p>
+            {report.urgencyPercentage !== undefined && report.urgencyPercentage > 0 && (
+              <div className="mb-3 p-2 rounded-lg bg-accent/50 border">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" />
+                    Tingkat Urgensi
+                  </span>
+                  <span className="text-xs font-bold">{report.urgencyPercentage.toFixed(1)}%</span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div
+                    className={`h-2 rounded-full transition-all ${
+                      report.urgencyPercentage >= 80
+                        ? 'bg-destructive'
+                        : report.urgencyPercentage >= 60
+                          ? 'bg-orange-500'
+                          : report.urgencyPercentage >= 40
+                            ? 'bg-yellow-500'
+                            : 'bg-green-500'
+                    }`}
+                    style={{ width: `${Math.min(100, report.urgencyPercentage)}%` }}
+                  />
+                </div>
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <RoadIssueTypeBadge type={report.type} />
@@ -316,6 +450,97 @@ function RoadReportCard({ report }: { report: RoadReport }) {
             <DangerLevelBadge level={report.dangerLevel} />
           </div>
 
+          {/* Urgency Percentage */}
+          {report.urgencyPercentage !== undefined && report.urgencyPercentage > 0 && (
+            <div className="p-4 rounded-lg bg-accent/50 border">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                <p className="font-semibold">Tingkat Urgensi Prediksi AI</p>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Persentase Urgensi</span>
+                  <span className="text-lg font-bold">{report.urgencyPercentage.toFixed(1)}%</span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-3">
+                  <div
+                    className={`h-3 rounded-full transition-all ${
+                      report.urgencyPercentage >= 80
+                        ? 'bg-destructive'
+                        : report.urgencyPercentage >= 60
+                          ? 'bg-orange-500'
+                          : report.urgencyPercentage >= 40
+                            ? 'bg-yellow-500'
+                            : 'bg-green-500'
+                    }`}
+                    style={{ width: `${Math.min(100, report.urgencyPercentage)}%` }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {report.urgencyPercentage >= 80
+                    ? 'Sangat Urgent - Perlu penanganan segera'
+                    : report.urgencyPercentage >= 60
+                      ? 'Urgent - Perlu perhatian segera'
+                      : report.urgencyPercentage >= 40
+                        ? 'Sedang - Perlu monitoring'
+                        : 'Rendah - Kondisi normal'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* AI Analysis */}
+          {report.aiAnalysis && (
+            <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+              <div className="flex items-center gap-2 mb-3">
+                <Brain className="h-5 w-5 text-primary" />
+                <p className="font-semibold">Analisis Machine Learning</p>
+              </div>
+              <div className="space-y-2 text-sm">
+                {report.aiAnalysis.detectedIssues &&
+                  report.aiAnalysis.detectedIssues.length > 0 && (
+                    <div>
+                      <p className="font-medium text-muted-foreground mb-1">Masalah Terdeteksi:</p>
+                      <ul className="list-disc list-inside space-y-1">
+                        {report.aiAnalysis.detectedIssues.map((issue, idx) => (
+                          <li key={idx}>{issue}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                <div>
+                  <p className="font-medium text-muted-foreground">Tingkat Kepercayaan:</p>
+                  <p>{Math.round((report.aiAnalysis.confidence || 0) * 100)}%</p>
+                </div>
+                {report.aiAnalysis.recommendedAction && (
+                  <div>
+                    <p className="font-medium text-muted-foreground">Rekomendasi:</p>
+                    <p>{report.aiAnalysis.recommendedAction}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Images Gallery */}
+          {report.images && report.images.length > 0 && (
+            <div>
+              <p className="font-medium text-muted-foreground mb-2">Foto Bukti</p>
+              <div className="grid grid-cols-2 gap-2">
+                {report.images.map((image, idx) => (
+                  <div key={idx} className="rounded-lg overflow-hidden border">
+                    <img
+                      src={getImageUrl(image)}
+                      alt={`${report.title} - Foto ${idx + 1}`}
+                      className="w-full h-32 object-cover hover:scale-105 transition-transform cursor-pointer"
+                      onClick={() => window.open(getImageUrl(image), '_blank')}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="grid gap-4 text-sm">
             <div>
               <p className="font-medium text-muted-foreground">Lokasi</p>
@@ -332,24 +557,6 @@ function RoadReportCard({ report }: { report: RoadReport }) {
               <p className="font-medium text-muted-foreground">Dilaporkan oleh</p>
               <p>{report.reportedBy.name}</p>
             </div>
-            {report.aiAnalysis && (
-              <div className="p-3 rounded-lg bg-accent/50 border">
-                <p className="font-medium mb-2">Analisis AI</p>
-                <div className="space-y-2 text-sm">
-                  <p>
-                    <strong>Masalah Terdeteksi:</strong>{' '}
-                    {report.aiAnalysis.detectedIssues.join(', ')}
-                  </p>
-                  <p>
-                    <strong>Tingkat Kepercayaan:</strong>{' '}
-                    {Math.round(report.aiAnalysis.confidence * 100)}%
-                  </p>
-                  <p>
-                    <strong>Rekomendasi:</strong> {report.aiAnalysis.recommendedAction}
-                  </p>
-                </div>
-              </div>
-            )}
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
@@ -414,6 +621,22 @@ export default function PublicReports() {
           images: report.images || [],
           status: report.status,
           riskLevel: report.riskLevel,
+          urgencyPercentage: report.urgencyPercentage ?? undefined,
+          aiAnalysis:
+            report.urgencyPercentage && report.urgencyPercentage > 0
+              ? {
+                  detectedIssues: [`Tingkat urgensi: ${report.urgencyPercentage.toFixed(1)}%`],
+                  confidence: 0.85, // Default confidence
+                  recommendedAction:
+                    report.urgencyPercentage >= 80
+                      ? 'Segera lakukan penanganan darurat'
+                      : report.urgencyPercentage >= 60
+                        ? 'Perlu penanganan segera'
+                        : report.urgencyPercentage >= 40
+                          ? 'Perlu perhatian dan monitoring'
+                          : 'Monitor kondisi',
+                }
+              : undefined,
           reportedBy: report.reportedBy
             ? {
                 id: report.reportedBy.id,
@@ -445,6 +668,7 @@ export default function PublicReports() {
           images: report.images || [],
           status: report.status,
           dangerLevel: report.dangerLevel,
+          urgencyPercentage: report.urgencyPercentage ?? undefined,
           aiAnalysis:
             report.aiDetectedIssues && report.aiDetectedIssues.length > 0
               ? {

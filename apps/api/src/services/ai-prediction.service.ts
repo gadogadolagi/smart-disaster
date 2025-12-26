@@ -54,21 +54,41 @@ class AIPredictionService {
       handler: this.predictFloodUrgency.bind(this),
     });
 
-    // Config untuk prediksi jalan rusak (image analysis)
+    // Config untuk prediksi jalan rusak - semua jenis menggunakan pothole service
     this.configs.set('road:pothole', {
       enabled: true,
       type: 'image',
       handler: this.predictRoadUrgency.bind(this),
     });
+    this.configs.set('road:landslide', {
+      enabled: true,
+      type: 'image',
+      handler: this.predictRoadUrgency.bind(this),
+    });
+    this.configs.set('road:bridge_damage', {
+      enabled: true,
+      type: 'image',
+      handler: this.predictRoadUrgency.bind(this),
+    });
+    this.configs.set('road:crack', {
+      enabled: true,
+      type: 'image',
+      handler: this.predictRoadUrgency.bind(this),
+    });
+    this.configs.set('road:flooding', {
+      enabled: true,
+      type: 'image',
+      handler: this.predictRoadUrgency.bind(this),
+    });
 
-    // Default untuk jenis bencana lain (text analysis)
+    // Default untuk jenis bencana lain (tidak menggunakan AI untuk sekarang)
     this.configs.set('disaster:default', {
       enabled: true,
       type: 'text',
       handler: this.predictDisasterUrgency.bind(this),
     });
 
-    // Default untuk jenis jalan rusak lain (image analysis jika ada gambar)
+    // Default untuk jenis jalan rusak lain (semua menggunakan pothole service)
     this.configs.set('road:default', {
       enabled: true,
       type: 'image',
@@ -93,7 +113,7 @@ class AIPredictionService {
   }
 
   /**
-   * Prediksi urgensi untuk banjir berdasarkan text description
+   * Prediksi urgensi untuk banjir menggunakan API eksternal
    */
   private async predictFloodUrgency(data: {
     description: string;
@@ -101,78 +121,92 @@ class AIPredictionService {
     images?: string[];
   }): Promise<AIPredictionResult> {
     try {
-      const text = `${data.title || ''} ${data.description}`.toLowerCase();
+      const apiUrl = 'https://1026181e1615.ngrok-free.app/api/predict/flood';
+      const comment = `${data.title || ''} ${data.description}`.trim();
 
-      // Keywords untuk tingkat urgensi tinggi
-      const highUrgencyKeywords = [
-        'tinggi',
-        'dalam',
-        'menenggelamkan',
-        'mengancam',
-        'kritis',
-        'sangat parah',
-        'evakuasi',
-        'darurat',
-        'mendesak',
-        'bahaya',
-        'tenggelam',
-        'terendam',
-        'banjir bandang',
-        'luapan',
-        'jebol',
-      ];
+      logger.info('Calling external flood prediction API', {
+        apiUrl,
+        commentLength: comment.length,
+      });
 
-      // Keywords untuk tingkat urgensi sedang
-      const mediumUrgencyKeywords = [
-        'sedang',
-        'cukup',
-        'lumayan',
-        'perlu perhatian',
-        'waspada',
-        'genangan',
-        'menggenang',
-        'tergenang',
-        'basah',
-      ];
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          comment: comment,
+          models: 'smv',
+        }),
+      });
 
-      // Keywords untuk tingkat urgensi rendah
-      const lowUrgencyKeywords = [
-        'ringan',
-        'kecil',
-        'sedikit',
-        'tidak parah',
-        'normal',
-        'biasa',
-        'tidak mengganggu',
-      ];
-
-      let urgencyScore = 30; // Default medium
-
-      // Hitung score berdasarkan keywords
-      const highCount = highUrgencyKeywords.filter((keyword) => text.includes(keyword)).length;
-      const mediumCount = mediumUrgencyKeywords.filter((keyword) => text.includes(keyword)).length;
-      const lowCount = lowUrgencyKeywords.filter((keyword) => text.includes(keyword)).length;
-
-      if (highCount > 0) {
-        urgencyScore = Math.min(95, 60 + highCount * 10);
-      } else if (mediumCount > 0) {
-        urgencyScore = 40 + mediumCount * 5;
-      } else if (lowCount > 0) {
-        urgencyScore = Math.max(10, 30 - lowCount * 5);
+      if (!response.ok) {
+        throw new Error(`API returned status ${response.status}`);
       }
 
-      // Adjust berdasarkan panjang description (semakin detail biasanya semakin urgent)
-      if (data.description.length > 200) {
-        urgencyScore = Math.min(100, urgencyScore + 10);
+      const apiResult = (await response.json()) as {
+        success: boolean;
+        prediction?: {
+          label?: string;
+          confidence?: number;
+          priority?: number;
+          color?: string;
+          icon?: string;
+          model?: string;
+        };
+        probabilities?: {
+          high?: number;
+          medium?: number;
+          low?: number;
+        };
+        type?: string;
+        timestamp?: string;
+      };
+
+      logger.info('Flood prediction API response', {
+        success: apiResult.success,
+        label: apiResult.prediction?.label,
+        confidence: apiResult.prediction?.confidence,
+      });
+
+      if (!apiResult.success || !apiResult.prediction) {
+        throw new Error('Invalid API response');
+      }
+
+      // Map priority dari API ke urgency percentage (0-100)
+      // priority: 0 = Rendah, 1 = Sedang, 2 = Tinggi
+      let urgencyScore = 0;
+      const label = apiResult.prediction.label?.toLowerCase() || '';
+      const confidence = apiResult.prediction.confidence || 0;
+
+      if (label.includes('rendah') || apiResult.prediction.priority === 0) {
+        urgencyScore = 20 + (confidence / 100) * 20; // 20-40
+      } else if (label.includes('sedang') || apiResult.prediction.priority === 1) {
+        urgencyScore = 40 + (confidence / 100) * 30; // 40-70
+      } else if (label.includes('tinggi') || apiResult.prediction.priority === 2) {
+        urgencyScore = 70 + (confidence / 100) * 30; // 70-100
+      } else {
+        // Fallback berdasarkan probabilities
+        const probs = apiResult.probabilities || {};
+        if (probs.high && probs.high > (probs.medium || 0) && probs.high > (probs.low || 0)) {
+          urgencyScore = 70 + (probs.high / 100) * 30;
+        } else if (probs.medium && probs.medium > (probs.low || 0)) {
+          urgencyScore = 40 + (probs.medium / 100) * 30;
+        } else if (probs.low) {
+          urgencyScore = 20 + (probs.low / 100) * 20;
+        }
       }
 
       // Clamp antara 0-100
       urgencyScore = Math.max(0, Math.min(100, urgencyScore));
 
       const detectedIssues: string[] = [];
-      if (highCount > 0) detectedIssues.push('Kondisi kritis terdeteksi');
-      if (text.includes('evakuasi')) detectedIssues.push('Perlu evakuasi');
-      if (text.includes('jebol')) detectedIssues.push('Infrastruktur jebol');
+      if (apiResult.prediction.label) {
+        detectedIssues.push(`Tingkat urgensi: ${apiResult.prediction.label}`);
+      }
+      if (apiResult.prediction.priority === 2) {
+        detectedIssues.push('Kondisi kritis - perlu penanganan segera');
+      }
 
       let recommendedAction = 'Monitor kondisi';
       if (urgencyScore >= 80) {
@@ -185,17 +219,18 @@ class AIPredictionService {
 
       return {
         urgencyPercentage: urgencyScore,
-        confidence: 0.75,
+        confidence: confidence / 100, // Convert dari 0-100 ke 0-1
         detectedIssues,
         recommendedAction,
         metadata: {
-          highKeywords: highCount,
-          mediumKeywords: mediumCount,
-          lowKeywords: lowCount,
+          apiResponse: apiResult,
+          label: apiResult.prediction.label,
+          priority: apiResult.prediction.priority,
+          probabilities: apiResult.probabilities,
         },
       };
     } catch (error) {
-      logger.error('Failed to predict flood urgency', {
+      logger.error('Failed to predict flood urgency from API', {
         error: error instanceof Error ? error.message : String(error),
       });
       // Return default jika error
@@ -207,7 +242,7 @@ class AIPredictionService {
   }
 
   /**
-   * Prediksi urgensi untuk jalan rusak berdasarkan image analysis
+   * Prediksi urgensi untuk jalan rusak menggunakan pothole service (sama seperti API pothole)
    */
   private async predictRoadUrgency(data: {
     description?: string;
@@ -219,11 +254,14 @@ class AIPredictionService {
       let detectedIssues: string[] = [];
       let confidence = 0.5;
 
-      // Jika ada gambar dan type adalah pothole, gunakan pothole service
-      if (data.images && data.images.length > 0 && data.type === 'pothole') {
+      // Gunakan pothole service untuk semua jenis jalan rusak jika ada gambar
+      if (data.images && data.images.length > 0) {
         try {
           // Ambil gambar pertama untuk prediksi
           const firstImagePath = data.images[0];
+          if (!firstImagePath) {
+            throw new Error('No image path provided');
+          }
           // Convert relative path ke absolute path
           const absoluteImagePath = path.join(
             process.cwd(),
@@ -266,6 +304,7 @@ class AIPredictionService {
               metadata: {
                 category: prediction.category,
                 allPredictions: prediction.allPredictions,
+                type: data.type,
               },
             };
           }
@@ -314,7 +353,7 @@ class AIPredictionService {
   }
 
   /**
-   * Prediksi urgensi untuk bencana umum (text analysis)
+   * Prediksi urgensi untuk bencana umum (selain banjir - tidak menggunakan AI untuk sekarang)
    */
   private async predictDisasterUrgency(data: {
     description: string;
@@ -322,64 +361,22 @@ class AIPredictionService {
     type?: string;
     images?: string[];
   }): Promise<AIPredictionResult> {
-    try {
-      const text = `${data.title || ''} ${data.description}`.toLowerCase();
+    // Untuk bencana selain banjir, tidak menggunakan AI prediction
+    // Return null/0 karena API machine learning belum siap
+    logger.info('Disaster type is not flood, skipping AI prediction', {
+      type: data.type,
+    });
 
-      // Similar logic dengan flood tapi lebih general
-      const highUrgencyKeywords = [
-        'kritis',
-        'darurat',
-        'mendesak',
-        'bahaya',
-        'mengancam',
-        'parah',
-        'sangat',
-        'evakuasi',
-        'korban',
-      ];
-
-      const mediumUrgencyKeywords = ['sedang', 'cukup', 'perlu perhatian', 'waspada'];
-
-      const lowUrgencyKeywords = ['ringan', 'kecil', 'tidak parah', 'normal'];
-
-      let urgencyScore = 40;
-
-      const highCount = highUrgencyKeywords.filter((k) => text.includes(k)).length;
-      const mediumCount = mediumUrgencyKeywords.filter((k) => text.includes(k)).length;
-      const lowCount = lowUrgencyKeywords.filter((k) => text.includes(k)).length;
-
-      if (highCount > 0) {
-        urgencyScore = Math.min(95, 60 + highCount * 8);
-      } else if (mediumCount > 0) {
-        urgencyScore = 40 + mediumCount * 5;
-      } else if (lowCount > 0) {
-        urgencyScore = Math.max(15, 40 - lowCount * 5);
-      }
-
-      const detectedIssues: string[] = [];
-      if (highCount > 0) detectedIssues.push('Kondisi darurat terdeteksi');
-      if (text.includes('korban')) detectedIssues.push('Ada korban');
-
-      return {
-        urgencyPercentage: Math.max(0, Math.min(100, urgencyScore)),
-        confidence: 0.7,
-        detectedIssues,
-        recommendedAction:
-          urgencyScore >= 80
-            ? 'Segera lakukan penanganan darurat'
-            : urgencyScore >= 60
-              ? 'Perlu penanganan segera'
-              : 'Monitor kondisi',
-      };
-    } catch (error) {
-      logger.error('Failed to predict disaster urgency', {
-        error: error instanceof Error ? error.message : String(error),
-      });
-      return {
-        urgencyPercentage: 50,
-        confidence: 0,
-      };
-    }
+    return {
+      urgencyPercentage: 0,
+      confidence: 0,
+      detectedIssues: [],
+      recommendedAction: 'Menunggu analisa lebih lanjut',
+      metadata: {
+        reason: 'AI prediction not available for this disaster type',
+        type: data.type,
+      },
+    };
   }
 
   /**
