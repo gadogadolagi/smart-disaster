@@ -1,5 +1,5 @@
-import rateLimit, { Options } from 'express-rate-limit';
 import { Request, Response } from 'express';
+import rateLimit, { Options } from 'express-rate-limit';
 import { HTTP_STATUS, MESSAGES } from '../utils/constants';
 import { logger } from '../utils/logger';
 
@@ -8,7 +8,7 @@ import { logger } from '../utils/logger';
  */
 const rateLimitWindowMs = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10); // 15 minutes
 const rateLimitMaxRequests = parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100', 10);
-const authRateLimitMax = parseInt(process.env.AUTH_RATE_LIMIT_MAX || '5', 10);
+const authRateLimitMax = parseInt(process.env.AUTH_RATE_LIMIT_MAX || '10', 10);
 
 /**
  * Custom rate limit handler
@@ -79,6 +79,17 @@ export const uploadRateLimiter = rateLimit({
   ...defaultOptions,
   max: 10,
   message: 'Too many upload requests, please try again later.',
+});
+
+/**
+ * Profile/Me endpoint rate limiter (more lenient for authenticated users)
+ * Allows 30 requests per 15 minutes
+ */
+export const profileRateLimiter = rateLimit({
+  ...defaultOptions,
+  max: 30,
+  windowMs: 900000, // 15 minutes
+  message: 'Too many profile requests, please try again later.',
 });
 
 /**

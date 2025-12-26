@@ -18,6 +18,9 @@ import healthRoutes from './routes/health.routes';
 import reportRoutes from './routes/report.routes';
 import userRoutes from './routes/user.routes';
 import potholeRoutes from './routes/pothole.routes';
+import assignmentRoutes from './routes/assignment.routes';
+import activityRoutes from './routes/activity.routes';
+import commentRoutes from './routes/comment.routes';
 
 // Import swagger setup
 import { setupSwagger } from './config/swagger';
@@ -174,6 +177,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/pothole', potholeRoutes);
+app.use('/api/assignments', assignmentRoutes);
+app.use('/api/activities', activityRoutes);
+app.use('/api/comments', commentRoutes);
 
 // ============================================
 // Error Handling

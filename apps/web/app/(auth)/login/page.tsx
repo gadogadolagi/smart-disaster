@@ -22,12 +22,12 @@ import { toast } from 'sonner';
 
 export default function Login() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<UserRole>('citizen');
+  const [activeTab, setActiveTab] = useState<UserRole>('user');
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -39,15 +39,20 @@ export default function Login() {
       if (success) {
         toast.success('Berhasil masuk');
 
-        if (activeTab === 'government') {
-          router.push('/admin');
-        } else if (activeTab === 'officer') {
-          router.push('/officer');
-        } else {
-          router.push('/');
-        }
+        // Wait a bit for user state to update, then redirect based on actual role
+        setTimeout(() => {
+          // Get updated user from context
+          const currentUser = user;
+          if (currentUser?.role === 'admin') {
+            router.push('/dashboard-admin');
+          } else if (currentUser?.role === 'petugas') {
+            router.push('/monitoring');
+          } else {
+            router.push('/');
+          }
+        }, 200);
       } else {
-        toast.error('Gagal masuk');
+        toast.error('Email atau password salah');
       }
     } finally {
       setIsLoading(false);
@@ -56,11 +61,11 @@ export default function Login() {
 
   const getPlaceholders = (): { email: string; password: string } => {
     switch (activeTab) {
-      case 'citizen':
+      case 'user':
         return { email: 'warga@demo.com', password: 'warga123' };
-      case 'government':
+      case 'admin':
         return { email: 'pemerintah@demo.com', password: 'admin123' };
-      case 'officer':
+      case 'petugas':
         return { email: 'petugas@demo.com', password: 'petugas123' };
       default:
         return { email: 'warga@demo.com', password: 'warga123' };
@@ -85,15 +90,15 @@ export default function Login() {
         <CardContent>
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as UserRole)}>
             <TabsList className="grid w-full grid-cols-3 mb-6">
-              <TabsTrigger value="citizen" className="gap-2">
+              <TabsTrigger value="user" className="gap-2">
                 <User className="h-4 w-4" />
                 Warga
               </TabsTrigger>
-              <TabsTrigger value="officer" className="gap-2">
+              <TabsTrigger value="petugas" className="gap-2">
                 <HardHat className="h-4 w-4" />
                 Petugas
               </TabsTrigger>
-              <TabsTrigger value="government" className="gap-2">
+              <TabsTrigger value="admin" className="gap-2">
                 <Building2 className="h-4 w-4" />
                 Admin
               </TabsTrigger>

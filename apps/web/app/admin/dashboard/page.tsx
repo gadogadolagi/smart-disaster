@@ -1,5 +1,7 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import {
   DangerLevelBadge,
   DisasterTypeBadge,
@@ -42,13 +44,11 @@ import {
   FileText,
   Flame,
   MapPin,
-  Trash2,
   TreePine,
   User as UserIcon,
   UserPlus,
+  Trash2,
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 interface DisasterReport {
@@ -80,8 +80,8 @@ interface DisasterReport {
   updatedAt: string;
 }
 
-export default function DashboardAdmin() {
-  const { user, isGovernment, getAccessToken, isLoading: authLoading, isAuthenticated } = useAuth();
+export default function AdminDashboardPage() {
+  const { user, getAccessToken } = useAuth();
   const router = useRouter();
 
   const [mounted, setMounted] = useState(false);
@@ -89,7 +89,6 @@ export default function DashboardAdmin() {
   const [disasterReports, setDisasterReports] = useState<DisasterReport[]>([]);
   const [roadReports, setRoadReports] = useState<any[]>([]);
   const [petugasList, setPetugasList] = useState<User[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
   const [stats, setStats] = useState({
     totalReports: 0,
     pendingReports: 0,
@@ -99,7 +98,6 @@ export default function DashboardAdmin() {
 
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [disasterTypeFilter, setDisasterTypeFilter] = useState<string>('all');
-  const [roadTypeFilter, setRoadTypeFilter] = useState<string>('all');
 
   // Dialog states
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
@@ -113,29 +111,13 @@ export default function DashboardAdmin() {
 
   useEffect(() => {
     if (!mounted) return;
-
-    // Wait for auth to finish loading
-    if (authLoading) return;
-
-    // Check if user is authenticated and is admin
-    if (!isAuthenticated || !user) {
-      router.replace('/login');
-      return;
-    }
-
-    if (user.role !== 'admin') {
-      toast.error('Akses ditolak. Hanya admin yang dapat mengakses halaman ini.');
-      router.replace('/');
-      return;
-    }
-
     loadData();
-  }, [mounted, authLoading, isAuthenticated, user, router]);
+  }, [mounted]);
 
   const loadData = async () => {
     setIsLoading(true);
     try {
-      await Promise.all([loadDisasterReports(), loadRoadReports(), loadPetugasList(), loadUsers()]);
+      await Promise.all([loadDisasterReports(), loadRoadReports(), loadPetugasList()]);
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('Gagal memuat data');
@@ -150,7 +132,7 @@ export default function DashboardAdmin() {
       const data = await res.json();
       if (res.ok && data.success) {
         setDisasterReports(data.data || []);
-        updateStats(data.data || [], []);
+        updateStats(data.data || [], roadReports);
       }
     } catch (error) {
       console.error('Error loading disaster reports:', error);
@@ -179,18 +161,6 @@ export default function DashboardAdmin() {
       }
     } catch (error) {
       console.error('Error loading petugas list:', error);
-    }
-  };
-
-  const loadUsers = async () => {
-    try {
-      const res = await apiCall(API_ENDPOINTS.users.list);
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setUsers(data.data || []);
-      }
-    } catch (error) {
-      console.error('Error loading users:', error);
     }
   };
 
@@ -322,10 +292,9 @@ export default function DashboardAdmin() {
   const filteredRoadReports = useMemo(() => {
     return roadReports.filter((r) => {
       const statusMatch = statusFilter === 'all' || r.status === statusFilter;
-      const typeMatch = roadTypeFilter === 'all' || r.type === roadTypeFilter;
-      return statusMatch && typeMatch;
+      return statusMatch;
     });
-  }, [roadReports, statusFilter, roadTypeFilter]);
+  }, [roadReports, statusFilter]);
 
   const disasterCounts = useMemo(
     () => ({
@@ -336,17 +305,6 @@ export default function DashboardAdmin() {
       other: disasterReports.filter((r) => r.type === 'other').length,
     }),
     [disasterReports]
-  );
-
-  const roadCounts = useMemo(
-    () => ({
-      pothole: roadReports.filter((r) => r.type === 'pothole').length,
-      crack: roadReports.filter((r) => r.type === 'crack').length,
-      landslide: roadReports.filter((r) => r.type === 'landslide').length,
-      bridge_damage: roadReports.filter((r) => r.type === 'bridge_damage').length,
-      flooding: roadReports.filter((r) => r.type === 'flooding').length,
-    }),
-    [roadReports]
   );
 
   const getDisasterIcon = (type: DisasterType) => {
@@ -363,19 +321,7 @@ export default function DashboardAdmin() {
     }
   };
 
-  if (!mounted || authLoading) {
-    return (
-      <div className="container py-8">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <p>Memuat...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated || !user || user.role !== 'admin') {
-    return null;
-  }
+  if (!mounted) return null;
 
   if (isLoading) {
     return (
@@ -403,12 +349,7 @@ export default function DashboardAdmin() {
           icon={Activity}
           variant="info"
         />
-        <StatsCard
-          title="Selesai"
-          value={stats.resolvedReports}
-          icon={CheckCircle}
-          variant="success"
-        />
+        <StatsCard title="Selesai" value={stats.resolvedReports} icon={CheckCircle} variant="success" />
       </div>
 
       <Tabs defaultValue="disaster" className="space-y-6">
@@ -514,7 +455,7 @@ export default function DashboardAdmin() {
                         <div className="flex flex-wrap items-start justify-between gap-4">
                           <div className="flex gap-4 flex-1">
                             {report.images?.[0] && (
-                              <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                              <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted shrink-0">
                                 <img
                                   src={`${API_BASE_URL}${report.images[0]}`}
                                   alt=""
@@ -698,7 +639,7 @@ export default function DashboardAdmin() {
                       <div className="flex flex-wrap items-start justify-between gap-4">
                         <div className="flex gap-4 flex-1">
                           {report.images?.[0] && (
-                            <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                            <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted shrink-0">
                               <img
                                 src={`${API_BASE_URL}${report.images[0]}`}
                                 alt=""
@@ -844,3 +785,4 @@ export default function DashboardAdmin() {
     </div>
   );
 }
+
