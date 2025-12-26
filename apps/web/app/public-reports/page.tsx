@@ -17,6 +17,13 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,6 +44,7 @@ import {
   TrendingUp,
   User,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -149,12 +157,13 @@ function CommentSection({
 }
 
 function DisasterReportCard({ report }: { report: DisasterReport }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Card className="cursor-pointer hover:shadow-md transition-all hover:border-primary/50">
+    <Card
+      className="cursor-pointer hover:shadow-md transition-all hover:border-primary/50"
+      onClick={() => router.push(`/public-reports/disaster/${report.id}`)}
+    >
           <CardHeader className="pb-2">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1">
@@ -215,166 +224,17 @@ function DisasterReportCard({ report }: { report: DisasterReport }) {
             </div>
           </CardContent>
         </Card>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-destructive" />
-            {report.title}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            <StatusBadge status={report.status} />
-            <DisasterTypeBadge type={report.type} />
-            <RiskLevelBadge level={report.riskLevel} />
-          </div>
-
-          {/* Urgency Percentage */}
-          {report.urgencyPercentage !== undefined && report.urgencyPercentage > 0 && (
-            <div className="p-4 rounded-lg bg-accent/50 border">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                <p className="font-semibold">Tingkat Urgensi Prediksi AI</p>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Persentase Urgensi</span>
-                  <span className="text-lg font-bold">{report.urgencyPercentage.toFixed(1)}%</span>
-                </div>
-                <div className="w-full bg-muted rounded-full h-3">
-                  <div
-                    className={`h-3 rounded-full transition-all ${
-                      report.urgencyPercentage >= 80
-                        ? 'bg-destructive'
-                        : report.urgencyPercentage >= 60
-                          ? 'bg-orange-500'
-                          : report.urgencyPercentage >= 40
-                            ? 'bg-yellow-500'
-                            : 'bg-green-500'
-                    }`}
-                    style={{ width: `${Math.min(100, report.urgencyPercentage)}%` }}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {report.urgencyPercentage >= 80
-                    ? 'Sangat Urgent - Perlu penanganan segera'
-                    : report.urgencyPercentage >= 60
-                      ? 'Urgent - Perlu perhatian segera'
-                      : report.urgencyPercentage >= 40
-                        ? 'Sedang - Perlu monitoring'
-                        : 'Rendah - Kondisi normal'}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* AI Analysis */}
-          {report.aiAnalysis && (
-            <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-              <div className="flex items-center gap-2 mb-3">
-                <Brain className="h-5 w-5 text-primary" />
-                <p className="font-semibold">Analisis Machine Learning</p>
-              </div>
-              <div className="space-y-2 text-sm">
-                {report.aiAnalysis.detectedIssues &&
-                  report.aiAnalysis.detectedIssues.length > 0 && (
-                    <div>
-                      <p className="font-medium text-muted-foreground mb-1">Masalah Terdeteksi:</p>
-                      <ul className="list-disc list-inside space-y-1">
-                        {report.aiAnalysis.detectedIssues.map((issue, idx) => (
-                          <li key={idx}>{issue}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                <div>
-                  <p className="font-medium text-muted-foreground">Tingkat Kepercayaan:</p>
-                  <p>{Math.round((report.aiAnalysis.confidence || 0) * 100)}%</p>
-                </div>
-                {report.aiAnalysis.recommendedAction && (
-                  <div>
-                    <p className="font-medium text-muted-foreground">Rekomendasi:</p>
-                    <p>{report.aiAnalysis.recommendedAction}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Images Gallery */}
-          {report.images && report.images.length > 0 && (
-            <div>
-              <p className="font-medium text-muted-foreground mb-2">Foto Bukti</p>
-              <div className="grid grid-cols-2 gap-2">
-                {report.images.map((image, idx) => (
-                  <div key={idx} className="rounded-lg overflow-hidden border">
-                    <img
-                      src={getImageUrl(image)}
-                      alt={`${report.title} - Foto ${idx + 1}`}
-                      className="w-full h-32 object-cover hover:scale-105 transition-transform cursor-pointer"
-                      onClick={() => window.open(getImageUrl(image), '_blank')}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="grid gap-4 text-sm">
-            <div>
-              <p className="font-medium text-muted-foreground">Lokasi</p>
-              <p className="flex items-center gap-1">
-                <MapPin className="h-4 w-4" />
-                {report.location.address}, {report.location.district}
-              </p>
-            </div>
-            <div>
-              <p className="font-medium text-muted-foreground">Deskripsi</p>
-              <p>{report.description}</p>
-            </div>
-            <div>
-              <p className="font-medium text-muted-foreground">Dilaporkan oleh</p>
-              <p>{report.reportedBy.name}</p>
-            </div>
-            {report.handledBy && (
-              <div>
-                <p className="font-medium text-muted-foreground">Ditangani oleh</p>
-                <p className="flex items-center gap-1">
-                  <Shield className="h-4 w-4 text-primary" />
-                  {report.handledBy}
-                </p>
-              </div>
-            )}
-            {report.notes && (
-              <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
-                <p className="font-medium text-muted-foreground mb-1">Catatan Penanganan</p>
-                <p>{report.notes}</p>
-              </div>
-            )}
-            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                Dibuat: {new Date(report.createdAt).toLocaleString('id-ID')}
-              </span>
-              <span>Update: {new Date(report.updatedAt).toLocaleString('id-ID')}</span>
-            </div>
-          </div>
-
-          <CommentSection reportId={report.id} reportType="disaster" />
-        </div>
-      </DialogContent>
-    </Dialog>
   );
 }
 
 function RoadReportCard({ report }: { report: RoadReport }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Card className="cursor-pointer hover:shadow-md transition-all hover:border-primary/50">
+    <Card
+      className="cursor-pointer hover:shadow-md transition-all hover:border-primary/50"
+      onClick={() => router.push(`/public-reports/road/${report.id}`)}
+    >
           <CardHeader className="pb-2">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1">
@@ -435,141 +295,6 @@ function RoadReportCard({ report }: { report: RoadReport }) {
             </div>
           </CardContent>
         </Card>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Construction className="h-5 w-5 text-emergency-warning" />
-            {report.title}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            <StatusBadge status={report.status} />
-            <RoadIssueTypeBadge type={report.type} />
-            <DangerLevelBadge level={report.dangerLevel} />
-          </div>
-
-          {/* Urgency Percentage */}
-          {report.urgencyPercentage !== undefined && report.urgencyPercentage > 0 && (
-            <div className="p-4 rounded-lg bg-accent/50 border">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                <p className="font-semibold">Tingkat Urgensi Prediksi AI</p>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Persentase Urgensi</span>
-                  <span className="text-lg font-bold">{report.urgencyPercentage.toFixed(1)}%</span>
-                </div>
-                <div className="w-full bg-muted rounded-full h-3">
-                  <div
-                    className={`h-3 rounded-full transition-all ${
-                      report.urgencyPercentage >= 80
-                        ? 'bg-destructive'
-                        : report.urgencyPercentage >= 60
-                          ? 'bg-orange-500'
-                          : report.urgencyPercentage >= 40
-                            ? 'bg-yellow-500'
-                            : 'bg-green-500'
-                    }`}
-                    style={{ width: `${Math.min(100, report.urgencyPercentage)}%` }}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {report.urgencyPercentage >= 80
-                    ? 'Sangat Urgent - Perlu penanganan segera'
-                    : report.urgencyPercentage >= 60
-                      ? 'Urgent - Perlu perhatian segera'
-                      : report.urgencyPercentage >= 40
-                        ? 'Sedang - Perlu monitoring'
-                        : 'Rendah - Kondisi normal'}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* AI Analysis */}
-          {report.aiAnalysis && (
-            <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-              <div className="flex items-center gap-2 mb-3">
-                <Brain className="h-5 w-5 text-primary" />
-                <p className="font-semibold">Analisis Machine Learning</p>
-              </div>
-              <div className="space-y-2 text-sm">
-                {report.aiAnalysis.detectedIssues &&
-                  report.aiAnalysis.detectedIssues.length > 0 && (
-                    <div>
-                      <p className="font-medium text-muted-foreground mb-1">Masalah Terdeteksi:</p>
-                      <ul className="list-disc list-inside space-y-1">
-                        {report.aiAnalysis.detectedIssues.map((issue, idx) => (
-                          <li key={idx}>{issue}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                <div>
-                  <p className="font-medium text-muted-foreground">Tingkat Kepercayaan:</p>
-                  <p>{Math.round((report.aiAnalysis.confidence || 0) * 100)}%</p>
-                </div>
-                {report.aiAnalysis.recommendedAction && (
-                  <div>
-                    <p className="font-medium text-muted-foreground">Rekomendasi:</p>
-                    <p>{report.aiAnalysis.recommendedAction}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Images Gallery */}
-          {report.images && report.images.length > 0 && (
-            <div>
-              <p className="font-medium text-muted-foreground mb-2">Foto Bukti</p>
-              <div className="grid grid-cols-2 gap-2">
-                {report.images.map((image, idx) => (
-                  <div key={idx} className="rounded-lg overflow-hidden border">
-                    <img
-                      src={getImageUrl(image)}
-                      alt={`${report.title} - Foto ${idx + 1}`}
-                      className="w-full h-32 object-cover hover:scale-105 transition-transform cursor-pointer"
-                      onClick={() => window.open(getImageUrl(image), '_blank')}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="grid gap-4 text-sm">
-            <div>
-              <p className="font-medium text-muted-foreground">Lokasi</p>
-              <p className="flex items-center gap-1">
-                <MapPin className="h-4 w-4" />
-                {report.location.address}, {report.location.district}
-              </p>
-            </div>
-            <div>
-              <p className="font-medium text-muted-foreground">Deskripsi</p>
-              <p>{report.description}</p>
-            </div>
-            <div>
-              <p className="font-medium text-muted-foreground">Dilaporkan oleh</p>
-              <p>{report.reportedBy.name}</p>
-            </div>
-            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                Dibuat: {new Date(report.createdAt).toLocaleString('id-ID')}
-              </span>
-              <span>Update: {new Date(report.updatedAt).toLocaleString('id-ID')}</span>
-            </div>
-          </div>
-
-          <CommentSection reportId={report.id} reportType="road" />
-        </div>
-      </DialogContent>
-    </Dialog>
   );
 }
 
@@ -578,6 +303,9 @@ export default function PublicReports() {
   const [roadReports, setRoadReports] = useState<RoadReport[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [disasterTypeFilter, setDisasterTypeFilter] = useState<string>('all');
+  const [districtFilter, setDistrictFilter] = useState<string>('all');
+  const [riskLevelFilter, setRiskLevelFilter] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
 
   // Fetch reports from API
@@ -719,9 +447,30 @@ export default function PublicReports() {
 
       const matchesStatus = statusFilter === 'all' || report.status === statusFilter;
 
-      return matchesSearch && matchesStatus;
+      const matchesType =
+        disasterTypeFilter === 'all' ||
+        (report.type === 'disaster' && (report as DisasterReport).type === disasterTypeFilter);
+
+      const matchesDistrict =
+        districtFilter === 'all' || report.location.district === districtFilter;
+
+      const matchesRiskLevel =
+        riskLevelFilter === 'all' ||
+        (report.type === 'disaster' &&
+          (report as DisasterReport).riskLevel === riskLevelFilter);
+
+      return (
+        matchesSearch && matchesStatus && matchesType && matchesDistrict && matchesRiskLevel
+      );
     });
   };
+
+  const uniqueDistricts = Array.from(
+    new Set([
+      ...disasterReports.map((r) => r.location.district),
+      ...roadReports.map((r) => r.location.district),
+    ])
+  ).sort();
 
   const filteredDisasterReports = filterReports(disasterReports);
   const filteredRoadReports = filterReports(roadReports);
@@ -742,7 +491,7 @@ export default function PublicReports() {
 
         {/* Search and Filter */}
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="pt-6 space-y-4">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -753,8 +502,11 @@ export default function PublicReports() {
                   className="pl-10"
                 />
               </div>
+            </div>
 
+            <div className="flex flex-col gap-4">
               <div className="flex gap-2 flex-wrap">
+                <span className="text-sm font-medium self-center">Status:</span>
                 {['all', 'pending', 'verified', 'in_progress', 'resolved'].map((status) => (
                   <Button
                     key={status}
@@ -773,6 +525,59 @@ export default function PublicReports() {
                             : 'Selesai'}
                   </Button>
                 ))}
+              </div>
+
+              <div className="flex flex-wrap gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Jenis Bencana:</span>
+                  <Select value={disasterTypeFilter} onValueChange={setDisasterTypeFilter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Semua Jenis" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Semua Jenis</SelectItem>
+                      <SelectItem value="flood">Banjir</SelectItem>
+                      <SelectItem value="fire">Kebakaran</SelectItem>
+                      <SelectItem value="landslide">Longsor</SelectItem>
+                      <SelectItem value="fallen_tree">Pohon Tumbang</SelectItem>
+                      <SelectItem value="earthquake">Gempa Bumi</SelectItem>
+                      <SelectItem value="other">Lainnya</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Kecamatan:</span>
+                  <Select value={districtFilter} onValueChange={setDistrictFilter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Semua Kecamatan" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Semua Kecamatan</SelectItem>
+                      {uniqueDistricts.map((district) => (
+                        <SelectItem key={district} value={district}>
+                          {district}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Tingkat Risiko:</span>
+                  <Select value={riskLevelFilter} onValueChange={setRiskLevelFilter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Semua Level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Semua Level</SelectItem>
+                      <SelectItem value="low">Rendah</SelectItem>
+                      <SelectItem value="medium">Sedang</SelectItem>
+                      <SelectItem value="high">Tinggi</SelectItem>
+                      <SelectItem value="critical">Kritis</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           </CardContent>

@@ -3,7 +3,16 @@
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import { FileText, LayoutDashboard, LogOut, Shield, UserCircle, Users } from 'lucide-react';
+import {
+  Activity,
+  BarChart3,
+  FileText,
+  LayoutDashboard,
+  LogOut,
+  Shield,
+  UserCircle,
+  Users,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { ReactNode, useEffect, useState } from 'react';
@@ -14,9 +23,11 @@ interface AdminLayoutProps {
 }
 
 const adminNavItems = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/users', label: 'Manajemen User', icon: Users },
-  { href: '/admin/reports', label: 'Manajemen Laporan', icon: FileText },
+  { href: '/dashboard-admin', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard-admin/users', label: 'Manajemen User', icon: Users },
+  { href: '/dashboard-admin', label: 'Manajemen Laporan', icon: FileText },
+  { href: '/dashboard-admin/stats', label: 'Statistik', icon: BarChart3 },
+  { href: '/dashboard-admin/activities', label: 'Log Aktivitas', icon: Activity },
 ];
 
 export function AdminLayout({ children }: AdminLayoutProps) {

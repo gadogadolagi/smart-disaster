@@ -331,3 +331,4 @@ ${data.reportUrl ? `Lihat detail: ${data.reportUrl}` : ''}
 
 export const emailService = new EmailService();
 
+

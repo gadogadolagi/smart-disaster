@@ -309,6 +309,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string, role: UserRole): Promise<boolean> => {
     setIsLoading(true);
+    console.log('login', email, password, role);
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
@@ -385,7 +387,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateProfile = async (data: { name?: string; phone?: string; avatar?: string }): Promise<boolean> => {
+  const updateProfile = async (data: {
+    name?: string;
+    phone?: string;
+    avatar?: string;
+  }): Promise<boolean> => {
     setIsLoading(true);
     try {
       const accessToken = getAccessToken();

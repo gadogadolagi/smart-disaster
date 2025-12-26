@@ -17,6 +17,7 @@ export const API_ENDPOINTS = {
       update: (id: string) => `${API_BASE_URL}/api/reports/road/${id}`,
       delete: (id: string) => `${API_BASE_URL}/api/reports/road/${id}`,
     },
+    myReports: `${API_BASE_URL}/api/reports/my-reports`,
   },
   assignments: {
     petugas: `${API_BASE_URL}/api/assignments/petugas`,
@@ -33,6 +34,12 @@ export const API_ENDPOINTS = {
   activities: {
     getReport: (id: string) => `${API_BASE_URL}/api/activities/report/${id}`,
     create: (id: string) => `${API_BASE_URL}/api/activities/report/${id}`,
+    list: `${API_BASE_URL}/api/activities`,
+    getByUser: (userId: string) => `${API_BASE_URL}/api/activities/user/${userId}`,
+  },
+  stats: {
+    dashboard: `${API_BASE_URL}/api/stats/dashboard`,
+    disaster: `${API_BASE_URL}/api/stats/disaster`,
   },
 };
 

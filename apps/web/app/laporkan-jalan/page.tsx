@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { API_ENDPOINTS } from '@/lib/api/config';
 import type { RoadIssueType } from '@/types';
-import { Brain, Construction, Upload, X } from 'lucide-react';
+import { Brain, Construction, Upload, X, MapPin, Navigation } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function LaporkanJalan() {
@@ -39,6 +39,8 @@ export default function LaporkanJalan() {
     reporterPhone: '',
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [locationStatus, setLocationStatus] = useState<'idle' | 'getting' | 'success' | 'error'>('idle');
+  const [locationError, setLocationError] = useState<string>('');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -51,6 +53,52 @@ export default function LaporkanJalan() {
 
   const removeFile = (index: number) => {
     setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
+  };
+
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation tidak didukung oleh browser Anda');
+      setLocationStatus('error');
+      return;
+    }
+
+    setLocationStatus('getting');
+    setLocationError('');
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setFormData({
+          ...formData,
+          lat: latitude.toString(),
+          lng: longitude.toString(),
+        });
+        setLocationStatus('success');
+        toast.success('Lokasi berhasil didapatkan');
+      },
+      (error) => {
+        let errorMessage = 'Gagal mendapatkan lokasi';
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = 'Akses lokasi ditolak. Silakan izinkan akses lokasi di pengaturan browser.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = 'Informasi lokasi tidak tersedia.';
+            break;
+          case error.TIMEOUT:
+            errorMessage = 'Waktu permintaan lokasi habis.';
+            break;
+        }
+        setLocationError(errorMessage);
+        setLocationStatus('error');
+        toast.error(errorMessage);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -194,6 +242,62 @@ export default function LaporkanJalan() {
                     required
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Koordinat Lokasi</Label>
+                <div className="flex gap-2">
+                  <div className="flex-1 grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Latitude</Label>
+                      <Input
+                        value={formData.lat}
+                        onChange={(e) => setFormData({ ...formData, lat: e.target.value })}
+                        placeholder="-6.2088"
+                        type="number"
+                        step="any"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Longitude</Label>
+                      <Input
+                        value={formData.lng}
+                        onChange={(e) => setFormData({ ...formData, lng: e.target.value })}
+                        placeholder="106.8226"
+                        type="number"
+                        step="any"
+                      />
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={getCurrentLocation}
+                    disabled={locationStatus === 'getting'}
+                    className="mt-6"
+                  >
+                    {locationStatus === 'getting' ? (
+                      <>
+                        <Navigation className="h-4 w-4 mr-2 animate-spin" />
+                        Mendapatkan...
+                      </>
+                    ) : (
+                      <>
+                        <MapPin className="h-4 w-4 mr-2" />
+                        Ambil Lokasi
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {locationStatus === 'success' && (
+                  <p className="text-xs text-success flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    Lokasi berhasil didapatkan
+                  </p>
+                )}
+                {locationError && (
+                  <p className="text-xs text-destructive">{locationError}</p>
+                )}
               </div>
 
               {!user && (
