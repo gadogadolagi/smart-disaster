@@ -1,0 +1,99 @@
+{
+    "info": {
+        "_postman_id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+        "name": "AI Engineer Service API",
+        "description": "Koleksi untuk ngetest API AI: Kebakaran (Tabular), Kerusakan Jalan (Gambar), dan Banjir (Teks)",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Predict Fire (Tabular)",
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"Temperatur_rata_rata\": 26.7,\n    \"Kelembapan_rata_rata\": 57.4,\n    \"Curah_hujan\": 0,\n    \"Kecepatan_angin_rata_rata\": 0,\n    \"Kelembaban_Permukaan_Tanah\": 72.6\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "http://localhost:8000/predict/fire",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8000",
+                    "path": [
+                        "predict",
+                        "fire"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "Predict Road (Image)",
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "formdata",
+                    "formdata": [
+                        {
+                            "key": "file",
+                            "description": "Upload gambar jalan (JPG/PNG)",
+                            "type": "file",
+                            "src": []
+                        }
+                    ]
+                },
+                "url": {
+                    "raw": "http://localhost:8000/predict/road",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8000",
+                    "path": [
+                        "predict",
+                        "road"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "Predict Flood (Text)",
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"comment\": \"Air sungai di dekat rumah saya sudah mulai meluap sejak hujan deras tadi pagi.\"\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "http://localhost:8000/predict/flood",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8000",
+                    "path": [
+                        "predict",
+                        "flood"
+                    ]
+                }
+            },
+            "response": []
+        }
+    ]
+}

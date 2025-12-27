@@ -1,0 +1,83 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+# (Ignore the project's venv directory)
+ai_service/
+venv/
+env/
+.venv/
+
+# Python packaging
+pip-wheel-metadata/
+__pypackages__/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Logs and databases
+*.log
+*.sqlite3
+*.db
+
+# VS Code
+.vscode/
+
+# JetBrains IDEs
+.idea/
+*.iml
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# macOS / Windows
+.DS_Store
+Thumbs.db
+
+# Data and models (do not commit large data or trained models)
+data_comment/
+models/
+!models/.gitkeep
+*.h5
+*.joblib
+*.pkl
+*.ckpt
+
+# Environment variables / secrets
+.env
+.env.*
+credentials.json
+secrets.json
+
+# Misc
+*.gz
+*.zip
+*.tar
+*.rar
+
+# Keep a file tracked explicitly: example
+# To keep a specific file under models/, you can add an exception e.g.:
+# !models/keep_this_model.h5
