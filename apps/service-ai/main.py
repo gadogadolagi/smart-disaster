@@ -6,6 +6,7 @@ import pandas as pd
 import tensorflow as tf
 import requests
 from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 from pydantic import BaseModel
 from typing import Dict
@@ -14,6 +15,15 @@ app = FastAPI(
     title="AI Service API", 
     description="Multi-Modal AI Service",
     version="1.0"
+)
+
+# CORS Configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, replace with specific origins like ["http://localhost:3000", "https://yourdomain.com"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 LOCATION_SHEET_DB = {

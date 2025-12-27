@@ -3,6 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { RealtimeMonitoring } from '@/components/shared';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   getDisasterReports,
@@ -87,7 +88,7 @@ export default function Home() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-linear-to-br from-primary/5 via-background to-emergency-flood/5">
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-emergency-flood/5">
         <div className="absolute inset-0 bg-grid-pattern opacity-5" />
         <div className="absolute top-20 right-20 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
         <div className="absolute bottom-20 left-20 w-96 h-96 bg-emergency-flood/10 rounded-full blur-3xl" />
@@ -105,7 +106,7 @@ export default function Home() {
 
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
                 Portal Pelaporan{' '}
-                <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-emergency-flood">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emergency-flood">
                   Kebencanaan
                 </span>
               </h1>
@@ -190,7 +191,7 @@ export default function Home() {
 
             {/* Hero Visual */}
             <div className="relative hidden lg:block">
-              <div className="relative bg-linear-to-br from-card to-card/50 rounded-3xl p-8 border shadow-2xl">
+              <div className="relative bg-gradient-to-br from-card to-card/50 rounded-3xl p-8 border shadow-2xl">
                 <div className="absolute -top-4 -right-4 bg-emergency-fire text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 shadow-lg">
                   <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
                   Live Monitoring
@@ -205,7 +206,7 @@ export default function Home() {
 
                   <div className="grid grid-cols-2 gap-4">
                     {disasterTypes.map((type, i) => (
-                      <div key={i} className="p-4 rounded-xl bg-background/50 border">
+                      <div key={i} className="p-4 rounded-xl bg-background/50 border hover:bg-background/70 transition-colors">
                         <type.icon className={`w-6 h-6 ${type.color} mb-2`} />
                         <p className="text-2xl font-bold">{type.count}</p>
                         <p className="text-sm text-muted-foreground">{type.label}</p>
@@ -276,8 +277,11 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Real-time Monitoring Section */}
+      <RealtimeMonitoring />
+
       {/* Recent Reports Section */}
-      <section className="py-20 bg-muted/30">
+      <section className="py-20 bg-background">
         <div className="container">
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -291,7 +295,13 @@ export default function Home() {
                   Lihat Semua <ArrowRight className="w-4 h-4" />
                 </Button>
               </Link>
-            ) : null}
+            ) : (
+              <Link href="/public-reports">
+                <Button variant="outline" className="gap-2">
+                  Lihat Semua <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
+            )}
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
@@ -355,7 +365,7 @@ export default function Home() {
       </section>
 
       {/* Emergency Contact */}
-      <section className="py-16 bg-linear-to-r from-emergency-fire to-emergency-fire/80">
+      <section className="py-16 bg-gradient-to-r from-emergency-fire to-emergency-fire/80">
         <div className="container">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-white">
             <div className="flex items-center gap-4">

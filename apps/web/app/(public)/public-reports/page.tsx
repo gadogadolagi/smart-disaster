@@ -12,6 +12,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -29,6 +38,7 @@ import {
   Clock,
   Construction,
   Eye,
+  Filter,
   MapPin,
   MessageCircle,
   Search,
@@ -36,9 +46,10 @@ import {
   Shield,
   TrendingUp,
   User,
+  X,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 function CommentSection({
@@ -154,22 +165,22 @@ function DisasterReportCard({ report }: { report: DisasterReport }) {
 
   return (
     <Card
-      className="cursor-pointer hover:shadow-md transition-all hover:border-primary/50"
+      className="cursor-pointer hover:shadow-md transition-all hover:border-primary/50 h-full flex flex-col"
       onClick={() => router.push(`/public-reports/disaster/${report.id}`)}
     >
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
-          <div className="flex-1">
-            <CardTitle className="text-base line-clamp-1">{report.title}</CardTitle>
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-base line-clamp-2">{report.title}</CardTitle>
             <CardDescription className="flex items-center gap-1 mt-1">
-              <MapPin className="h-3 w-3" />
-              {report.location.district}
+              <MapPin className="h-3 w-3 shrink-0" />
+              <span className="truncate">{report.location.district}</span>
             </CardDescription>
           </div>
           <StatusBadge status={report.status} />
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 flex flex-col">
         {report.images && report.images.length > 0 && (
           <div className="mb-3 rounded-lg overflow-hidden">
             <img
@@ -179,7 +190,9 @@ function DisasterReportCard({ report }: { report: DisasterReport }) {
             />
           </div>
         )}
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{report.description}</p>
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-3 flex-1">
+          {report.description}
+        </p>
         {report.urgencyPercentage !== undefined && report.urgencyPercentage > 0 && (
           <div className="mb-3 p-2 rounded-lg bg-accent/50 border">
             <div className="flex items-center justify-between mb-1">
@@ -205,8 +218,8 @@ function DisasterReportCard({ report }: { report: DisasterReport }) {
             </div>
           </div>
         )}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between flex-wrap gap-2 mt-auto">
+          <div className="flex items-center gap-2 flex-wrap">
             <DisasterTypeBadge type={report.type} />
             <RiskLevelBadge level={report.riskLevel} />
           </div>
@@ -225,22 +238,22 @@ function RoadReportCard({ report }: { report: RoadReport }) {
 
   return (
     <Card
-      className="cursor-pointer hover:shadow-md transition-all hover:border-primary/50"
+      className="cursor-pointer hover:shadow-md transition-all hover:border-primary/50 h-full flex flex-col"
       onClick={() => router.push(`/public-reports/road/${report.id}`)}
     >
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
-          <div className="flex-1">
-            <CardTitle className="text-base line-clamp-1">{report.title}</CardTitle>
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-base line-clamp-2">{report.title}</CardTitle>
             <CardDescription className="flex items-center gap-1 mt-1">
-              <MapPin className="h-3 w-3" />
-              {report.location.district}
+              <MapPin className="h-3 w-3 shrink-0" />
+              <span className="truncate">{report.location.district}</span>
             </CardDescription>
           </div>
           <StatusBadge status={report.status} />
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 flex flex-col">
         {report.images && report.images.length > 0 && (
           <div className="mb-3 rounded-lg overflow-hidden">
             <img
@@ -250,7 +263,9 @@ function RoadReportCard({ report }: { report: RoadReport }) {
             />
           </div>
         )}
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{report.description}</p>
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-3 flex-1">
+          {report.description}
+        </p>
         {report.urgencyPercentage !== undefined && report.urgencyPercentage > 0 && (
           <div className="mb-3 p-2 rounded-lg bg-accent/50 border">
             <div className="flex items-center justify-between mb-1">
@@ -276,8 +291,8 @@ function RoadReportCard({ report }: { report: RoadReport }) {
             </div>
           </div>
         )}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between flex-wrap gap-2 mt-auto">
+          <div className="flex items-center gap-2 flex-wrap">
             <RoadIssueTypeBadge type={report.type} />
             <DangerLevelBadge level={report.dangerLevel} />
           </div>
@@ -291,6 +306,8 @@ function RoadReportCard({ report }: { report: RoadReport }) {
   );
 }
 
+const ITEMS_PER_PAGE = 12;
+
 export default function PublicReports() {
   const [disasterReports, setDisasterReports] = useState<DisasterReport[]>([]);
   const [roadReports, setRoadReports] = useState<RoadReport[]>([]);
@@ -300,6 +317,11 @@ export default function PublicReports() {
   const [districtFilter, setDistrictFilter] = useState<string>('all');
   const [riskLevelFilter, setRiskLevelFilter] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Pagination states
+  const [disasterPage, setDisasterPage] = useState(1);
+  const [roadPage, setRoadPage] = useState(1);
 
   // Fetch reports from API
   useEffect(() => {
@@ -307,11 +329,6 @@ export default function PublicReports() {
       try {
         setIsLoading(true);
 
-        // 🔎 debug URL
-        console.log('DISASTER URL:', API_ENDPOINTS?.reports?.disaster?.list);
-        console.log('ROAD URL:', API_ENDPOINTS?.reports?.road?.list);
-
-        // ✅ fetch paralel
         const [disasterResponse, roadResponse] = await Promise.all([
           fetch(API_ENDPOINTS.reports.disaster.list, { cache: 'no-store' }),
           fetch(API_ENDPOINTS.reports.road.list, { cache: 'no-store' }),
@@ -347,7 +364,7 @@ export default function PublicReports() {
             report.urgencyPercentage && report.urgencyPercentage > 0
               ? {
                   detectedIssues: [`Tingkat urgensi: ${report.urgencyPercentage.toFixed(1)}%`],
-                  confidence: 0.85, // Default confidence
+                  confidence: 0.85,
                   recommendedAction:
                     report.urgencyPercentage >= 80
                       ? 'Segera lakukan penanganan darurat'
@@ -417,11 +434,8 @@ export default function PublicReports() {
         setRoadReports(roadData);
       } catch (error) {
         console.error('Error fetching reports:', error);
-
-        // ✅ fallback ke mock supaya UI tetap tampil
         setDisasterReports(mockDisasterReports);
         setRoadReports(mockRoadReports);
-
         toast.error('API tidak bisa diakses');
       } finally {
         setIsLoading(false);
@@ -429,7 +443,7 @@ export default function PublicReports() {
     };
 
     fetchReports();
-  }, [toast]);
+  }, []);
 
   const filterReports = <T extends DisasterReport | RoadReport>(reports: T[]): T[] => {
     return reports.filter((report) => {
@@ -453,25 +467,97 @@ export default function PublicReports() {
     });
   };
 
-  const uniqueDistricts = Array.from(
-    new Set([
-      ...disasterReports.map((r) => r.location.district),
-      ...roadReports.map((r) => r.location.district),
-    ])
-  ).sort();
+  const uniqueDistricts = useMemo(
+    () =>
+      Array.from(
+        new Set([
+          ...disasterReports.map((r) => r.location.district),
+          ...roadReports.map((r) => r.location.district),
+        ])
+      ).sort(),
+    [disasterReports, roadReports]
+  );
 
-  const filteredDisasterReports = filterReports(disasterReports);
-  const filteredRoadReports = filterReports(roadReports);
+  const filteredDisasterReports = useMemo(
+    () => filterReports(disasterReports),
+    [
+      disasterReports,
+      searchQuery,
+      statusFilter,
+      disasterTypeFilter,
+      districtFilter,
+      riskLevelFilter,
+    ]
+  );
+
+  const filteredRoadReports = useMemo(
+    () => filterReports(roadReports),
+    [roadReports, searchQuery, statusFilter, disasterTypeFilter, districtFilter, riskLevelFilter]
+  );
+
+  // Pagination calculations
+  const disasterPagination = useMemo(() => {
+    const total = filteredDisasterReports.length;
+    const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
+    const startIndex = (disasterPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    const paginatedReports = filteredDisasterReports.slice(startIndex, endIndex);
+
+    return {
+      total,
+      totalPages,
+      hasNext: disasterPage < totalPages,
+      hasPrev: disasterPage > 1,
+      paginatedReports,
+    };
+  }, [filteredDisasterReports, disasterPage]);
+
+  const roadPagination = useMemo(() => {
+    const total = filteredRoadReports.length;
+    const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
+    const startIndex = (roadPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    const paginatedReports = filteredRoadReports.slice(startIndex, endIndex);
+
+    return {
+      total,
+      totalPages,
+      hasNext: roadPage < totalPages,
+      hasPrev: roadPage > 1,
+      paginatedReports,
+    };
+  }, [filteredRoadReports, roadPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setDisasterPage(1);
+    setRoadPage(1);
+  }, [searchQuery, statusFilter, disasterTypeFilter, districtFilter, riskLevelFilter]);
+
+  const hasActiveFilters =
+    statusFilter !== 'all' ||
+    disasterTypeFilter !== 'all' ||
+    districtFilter !== 'all' ||
+    riskLevelFilter !== 'all' ||
+    searchQuery !== '';
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('all');
+    setDisasterTypeFilter('all');
+    setDistrictFilter('all');
+    setRiskLevelFilter('all');
+  };
 
   return (
-    <div>
-      <div className="container py-8 space-y-8">
+    <div className="min-h-screen bg-background">
+      <div className="container py-4 md:py-8 space-y-6 md:space-y-8">
         {/* Header */}
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold tracking-tight">
+        <div className="text-center space-y-2 md:space-y-4">
+          <h1 className="text-2xl md:text-4xl font-bold tracking-tight">
             Laporan <span className="text-primary">Publik</span>
           </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto px-4">
             Lihat semua laporan bencana dan infrastruktur dari warga. Pantau status penanganan dan
             berikan komentar untuk ikut memantau progres.
           </p>
@@ -479,47 +565,91 @@ export default function PublicReports() {
 
         {/* Search and Filter */}
         <Card>
-          <CardContent className="pt-6 space-y-4">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Cari laporan berdasarkan judul, deskripsi, atau lokasi..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+          <CardContent className="pt-4 md:pt-6 space-y-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Cari laporan berdasarkan judul, deskripsi, atau lokasi..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
             </div>
 
-            <div className="flex flex-col gap-4">
-              <div className="flex gap-2 flex-wrap">
-                <span className="text-sm font-medium self-center">Status:</span>
-                {['all', 'pending', 'verified', 'in_progress', 'resolved'].map((status) => (
-                  <Button
-                    key={status}
-                    variant={statusFilter === status ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setStatusFilter(status)}
-                  >
-                    {status === 'all'
-                      ? 'Semua'
-                      : status === 'pending'
-                        ? 'Menunggu'
-                        : status === 'verified'
-                          ? 'Terverifikasi'
-                          : status === 'in_progress'
-                            ? 'Proses'
-                            : 'Selesai'}
-                  </Button>
-                ))}
+            {/* Filter Toggle Button (Mobile) */}
+            <div className="flex items-center justify-between md:hidden">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowFilters(!showFilters)}
+                className="w-full"
+              >
+                <Filter className="h-4 w-4 mr-2" />
+                Filter
+                {hasActiveFilters && (
+                  <Badge variant="secondary" className="ml-2">
+                    {
+                      [
+                        statusFilter !== 'all',
+                        disasterTypeFilter !== 'all',
+                        districtFilter !== 'all',
+                        riskLevelFilter !== 'all',
+                        searchQuery !== '',
+                      ].filter(Boolean).length
+                    }
+                  </Badge>
+                )}
+              </Button>
+            </div>
+
+            {/* Filters */}
+            <div className={`space-y-4 ${showFilters ? 'block' : 'hidden md:block'}`}>
+              {/* Status Filter */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium">Status</label>
+                  {hasActiveFilters && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearFilters}
+                      className="h-auto p-1 text-xs"
+                    >
+                      <X className="h-3 w-3 mr-1" />
+                      Reset
+                    </Button>
+                  )}
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {['all', 'pending', 'verified', 'in_progress', 'resolved'].map((status) => (
+                    <Button
+                      key={status}
+                      variant={statusFilter === status ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setStatusFilter(status)}
+                      className="text-xs"
+                    >
+                      {status === 'all'
+                        ? 'Semua'
+                        : status === 'pending'
+                          ? 'Menunggu'
+                          : status === 'verified'
+                            ? 'Terverifikasi'
+                            : status === 'in_progress'
+                              ? 'Proses'
+                              : 'Selesai'}
+                    </Button>
+                  ))}
+                </div>
               </div>
 
-              <div className="flex flex-wrap gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">Jenis Bencana:</span>
+              {/* Other Filters */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Jenis Bencana</label>
                   <Select value={disasterTypeFilter} onValueChange={setDisasterTypeFilter}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger>
                       <SelectValue placeholder="Semua Jenis" />
                     </SelectTrigger>
                     <SelectContent>
@@ -534,10 +664,10 @@ export default function PublicReports() {
                   </Select>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">Kecamatan:</span>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Kecamatan</label>
                   <Select value={districtFilter} onValueChange={setDistrictFilter}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger>
                       <SelectValue placeholder="Semua Kecamatan" />
                     </SelectTrigger>
                     <SelectContent>
@@ -551,10 +681,10 @@ export default function PublicReports() {
                   </Select>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">Tingkat Risiko:</span>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Tingkat Risiko</label>
                   <Select value={riskLevelFilter} onValueChange={setRiskLevelFilter}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger>
                       <SelectValue placeholder="Semua Level" />
                     </SelectTrigger>
                     <SelectContent>
@@ -566,111 +696,271 @@ export default function PublicReports() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Hasil Filter</label>
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-muted">
+                    <span className="text-sm">
+                      {disasterPagination.total + roadPagination.total} laporan
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Map Overview - Show first report as example */}
-        {filteredDisasterReports.length > 0 || filteredRoadReports.length > 0 ? (
+        {/* Map Overview */}
+        {(disasterPagination.paginatedReports.length > 0 ||
+          roadPagination.paginatedReports.length > 0) && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
+              <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+                <MapPin className="h-4 w-4 md:h-5 md:w-5" />
                 Peta Lokasi Laporan
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-xs md:text-sm">
                 Peta lokasi laporan terbaru
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {filteredDisasterReports.length > 0 && filteredDisasterReports[0] ? (
+              {disasterPagination.paginatedReports.length > 0 &&
+              disasterPagination.paginatedReports[0] ? (
                 <MapEmbed
-                  lat={filteredDisasterReports[0].location.lat}
-                  lng={filteredDisasterReports[0].location.lng}
-                  address={filteredDisasterReports[0].location.address}
-                  title={filteredDisasterReports[0].title}
-                  height="400px"
+                  lat={disasterPagination.paginatedReports[0].location.lat}
+                  lng={disasterPagination.paginatedReports[0].location.lng}
+                  address={disasterPagination.paginatedReports[0].location.address}
+                  title={disasterPagination.paginatedReports[0].title}
+                  height="300px"
+                  className="rounded-lg"
                 />
-              ) : filteredRoadReports.length > 0 && filteredRoadReports[0] ? (
+              ) : roadPagination.paginatedReports.length > 0 &&
+                roadPagination.paginatedReports[0] ? (
                 <MapEmbed
-                  lat={filteredRoadReports[0].location.lat}
-                  lng={filteredRoadReports[0].location.lng}
-                  address={filteredRoadReports[0].location.address}
-                  title={filteredRoadReports[0].title}
-                  height="400px"
+                  lat={roadPagination.paginatedReports[0].location.lat}
+                  lng={roadPagination.paginatedReports[0].location.lng}
+                  address={roadPagination.paginatedReports[0].location.address}
+                  title={roadPagination.paginatedReports[0].title}
+                  height="300px"
+                  className="rounded-lg"
                 />
               ) : null}
             </CardContent>
           </Card>
-        ) : null}
+        )}
 
         {/* Reports Tabs */}
-        <Tabs defaultValue="disaster" className="space-y-6">
+        <Tabs defaultValue="disaster" className="space-y-4 md:space-y-6">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="disaster" className="gap-2">
-              <AlertTriangle className="h-4 w-4" />
-              Laporan Bencana ({filteredDisasterReports.length})
+            <TabsTrigger value="disaster" className="gap-1 md:gap-2 text-sm md:text-base">
+              <AlertTriangle className="h-3 w-3 md:h-4 md:w-4" />
+              <span className="hidden sm:inline">Laporan Bencana</span>
+              <span className="sm:hidden">Bencana</span>
+              <Badge variant="secondary" className="ml-1 md:ml-2">
+                {disasterPagination.total}
+              </Badge>
             </TabsTrigger>
-            <TabsTrigger value="road" className="gap-2">
-              <Construction className="h-4 w-4" />
-              Laporan Jalan ({filteredRoadReports.length})
+            <TabsTrigger value="road" className="gap-1 md:gap-2 text-sm md:text-base">
+              <Construction className="h-3 w-3 md:h-4 md:w-4" />
+              <span className="hidden sm:inline">Laporan Jalan</span>
+              <span className="sm:hidden">Jalan</span>
+              <Badge variant="secondary" className="ml-1 md:ml-2">
+                {roadPagination.total}
+              </Badge>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="disaster">
+          <TabsContent value="disaster" className="space-y-4">
             {isLoading ? (
               <Card>
                 <CardContent className="py-12 text-center">
                   <p className="text-muted-foreground">Memuat laporan...</p>
                 </CardContent>
               </Card>
-            ) : filteredDisasterReports.length === 0 ? (
+            ) : disasterPagination.paginatedReports.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center">
                   <Eye className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
                   <h3 className="font-semibold mb-2">Tidak Ada Laporan</h3>
-                  <p className="text-muted-foreground">
-                    {searchQuery || statusFilter !== 'all'
+                  <p className="text-muted-foreground text-sm">
+                    {hasActiveFilters
                       ? 'Tidak ditemukan laporan yang sesuai dengan filter.'
                       : 'Belum ada laporan bencana yang masuk.'}
                   </p>
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {filteredDisasterReports.map((report) => (
-                  <DisasterReportCard key={report.id} report={report} />
-                ))}
-              </div>
+              <>
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {disasterPagination.paginatedReports.map((report) => (
+                    <DisasterReportCard key={report.id} report={report} />
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {disasterPagination.totalPages > 1 && (
+                  <div className="mt-6">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (disasterPagination.hasPrev) {
+                                setDisasterPage(disasterPage - 1);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }
+                            }}
+                            className={
+                              !disasterPagination.hasPrev ? 'pointer-events-none opacity-50' : ''
+                            }
+                          />
+                        </PaginationItem>
+                        {Array.from({ length: disasterPagination.totalPages }, (_, i) => i + 1)
+                          .filter((page) => {
+                            const current = disasterPage;
+                            return (
+                              page === 1 ||
+                              page === disasterPagination.totalPages ||
+                              (page >= current - 1 && page <= current + 1)
+                            );
+                          })
+                          .map((page, index, array) => (
+                            <React.Fragment key={page}>
+                              {index > 0 && array[index - 1] !== page - 1 && <PaginationEllipsis />}
+                              <PaginationItem>
+                                <PaginationLink
+                                  href="#"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setDisasterPage(page);
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                  }}
+                                  isActive={disasterPage === page}
+                                >
+                                  {page}
+                                </PaginationLink>
+                              </PaginationItem>
+                            </React.Fragment>
+                          ))}
+                        <PaginationItem>
+                          <PaginationNext
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (disasterPagination.hasNext) {
+                                setDisasterPage(disasterPage + 1);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }
+                            }}
+                            className={
+                              !disasterPagination.hasNext ? 'pointer-events-none opacity-50' : ''
+                            }
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
+              </>
             )}
           </TabsContent>
 
-          <TabsContent value="road">
+          <TabsContent value="road" className="space-y-4">
             {isLoading ? (
               <Card>
                 <CardContent className="py-12 text-center">
                   <p className="text-muted-foreground">Memuat laporan...</p>
                 </CardContent>
               </Card>
-            ) : filteredRoadReports.length === 0 ? (
+            ) : roadPagination.paginatedReports.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center">
                   <Eye className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
                   <h3 className="font-semibold mb-2">Tidak Ada Laporan</h3>
-                  <p className="text-muted-foreground">
-                    {searchQuery || statusFilter !== 'all'
+                  <p className="text-muted-foreground text-sm">
+                    {hasActiveFilters
                       ? 'Tidak ditemukan laporan yang sesuai dengan filter.'
                       : 'Belum ada laporan jalan rusak yang masuk.'}
                   </p>
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {filteredRoadReports.map((report) => (
-                  <RoadReportCard key={report.id} report={report} />
-                ))}
-              </div>
+              <>
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                  {roadPagination.paginatedReports.map((report) => (
+                    <RoadReportCard key={report.id} report={report} />
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {roadPagination.totalPages > 1 && (
+                  <div className="mt-6">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (roadPagination.hasPrev) {
+                                setRoadPage(roadPage - 1);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }
+                            }}
+                            className={
+                              !roadPagination.hasPrev ? 'pointer-events-none opacity-50' : ''
+                            }
+                          />
+                        </PaginationItem>
+                        {Array.from({ length: roadPagination.totalPages }, (_, i) => i + 1)
+                          .filter((page) => {
+                            const current = roadPage;
+                            return (
+                              page === 1 ||
+                              page === roadPagination.totalPages ||
+                              (page >= current - 1 && page <= current + 1)
+                            );
+                          })
+                          .map((page, index, array) => (
+                            <React.Fragment key={page}>
+                              {index > 0 && array[index - 1] !== page - 1 && <PaginationEllipsis />}
+                              <PaginationItem>
+                                <PaginationLink
+                                  href="#"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setRoadPage(page);
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                  }}
+                                  isActive={roadPage === page}
+                                >
+                                  {page}
+                                </PaginationLink>
+                              </PaginationItem>
+                            </React.Fragment>
+                          ))}
+                        <PaginationItem>
+                          <PaginationNext
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (roadPagination.hasNext) {
+                                setRoadPage(roadPage + 1);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }
+                            }}
+                            className={
+                              !roadPagination.hasNext ? 'pointer-events-none opacity-50' : ''
+                            }
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
+              </>
             )}
           </TabsContent>
         </Tabs>

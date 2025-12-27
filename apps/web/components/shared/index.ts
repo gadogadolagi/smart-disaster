@@ -1,5 +1,6 @@
 export { MapEmbed } from './MapEmbed';
 export { MapPicker } from './MapPicker';
+export { RealtimeMonitoring } from './RealtimeMonitoring';
 export { StatsCard } from './StatsCard';
 export {
   DangerLevelBadge,
