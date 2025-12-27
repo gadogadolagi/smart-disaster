@@ -440,15 +440,13 @@ export default function PublicReports() {
       const matchesStatus = statusFilter === 'all' || report.status === statusFilter;
 
       const matchesType =
-        disasterTypeFilter === 'all' ||
-        (report.type === 'disaster' && (report as DisasterReport).type === disasterTypeFilter);
+        disasterTypeFilter === 'all' || (report as DisasterReport).type === disasterTypeFilter;
 
       const matchesDistrict =
         districtFilter === 'all' || report.location.district === districtFilter;
 
       const matchesRiskLevel =
-        riskLevelFilter === 'all' ||
-        (report.type === 'disaster' && (report as DisasterReport).riskLevel === riskLevelFilter);
+        riskLevelFilter === 'all' || (report as DisasterReport).riskLevel === riskLevelFilter;
 
       return matchesSearch && matchesStatus && matchesType && matchesDistrict && matchesRiskLevel;
     });

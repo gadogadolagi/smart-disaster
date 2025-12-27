@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { API_ENDPOINTS } from '@/lib/api/config';
 import type { RoadIssueType } from '@/types';
-import { Brain, Construction, Upload, X, MapPin, Navigation } from 'lucide-react';
+import { Brain, Construction, MapPin, Navigation, Upload, X } from 'lucide-react';
 import { useGeolocated } from 'react-geolocated';
 import { toast } from 'sonner';
 
@@ -359,9 +359,9 @@ export default function LaporkanJalan() {
                           className="flex items-center justify-between p-2 bg-muted rounded-lg"
                         >
                           <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <Upload className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                            <Upload className="h-4 w-4 text-muted-foreground shrink-0" />
                             <span className="text-sm truncate">{file.name}</span>
-                            <span className="text-xs text-muted-foreground flex-shrink-0">
+                            <span className="text-xs text-muted-foreground shrink-0">
                               ({(file.size / 1024 / 1024).toFixed(2)} MB)
                             </span>
                           </div>
@@ -369,7 +369,7 @@ export default function LaporkanJalan() {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 flex-shrink-0"
+                            className="h-6 w-6 shrink-0"
                             onClick={() => removeFile(index)}
                           >
                             <X className="h-4 w-4" />

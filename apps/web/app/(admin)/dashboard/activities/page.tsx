@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
-import { API_ENDPOINTS, apiCall, getImageUrl } from '@/lib/api/config';
+import { getImageUrl } from '@/lib/api/config';
 import { Activity, Calendar, Search, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -88,7 +88,8 @@ export default function ActivityLogPage() {
       activity.reportId.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesType = typeFilter === 'all' || activity.activityType === typeFilter;
-    const matchesReportType = reportTypeFilter === 'all' || activity.reportType === reportTypeFilter;
+    const matchesReportType =
+      reportTypeFilter === 'all' || activity.reportType === reportTypeFilter;
 
     return matchesSearch && matchesType && matchesReportType;
   });
@@ -172,7 +173,7 @@ export default function ActivityLogPage() {
             <Card key={activity.id}>
               <CardContent className="p-6">
                 <div className="flex gap-4">
-                  <div className="flex-shrink-0">
+                  <div className="shrink-0">
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                       <Activity className="h-5 w-5 text-primary" />
                     </div>
@@ -223,4 +224,3 @@ export default function ActivityLogPage() {
     </div>
   );
 }
-

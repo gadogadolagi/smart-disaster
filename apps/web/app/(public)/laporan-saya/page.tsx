@@ -8,7 +8,7 @@ import {
   StatusBadge,
 } from '@/components/shared';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -203,9 +203,9 @@ export default function LaporanSaya() {
                   <CardContent className="p-6">
                     <div className="flex flex-col md:flex-row gap-4">
                       {report.images.length > 0 && (
-                        <div className="w-full md:w-48 h-48 rounded-lg overflow-hidden flex-shrink-0">
+                        <div className="w-full md:w-48 h-48 rounded-lg overflow-hidden shrink-0">
                           <img
-                            src={getImageUrl(report.images[0])}
+                            src={getImageUrl(report.images[0] || '')}
                             alt={report.title}
                             className="w-full h-full object-cover"
                           />
@@ -223,7 +223,7 @@ export default function LaporanSaya() {
                         </div>
                         <div className="flex flex-wrap gap-2">
                           <DisasterTypeBadge type={report.type} />
-                          <RiskLevelBadge level={report.riskLevel} />
+                          <RiskLevelBadge level={report.riskLevel as any} />
                         </div>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <MapPin className="h-4 w-4" />
@@ -262,9 +262,9 @@ export default function LaporanSaya() {
                   <CardContent className="p-6">
                     <div className="flex flex-col md:flex-row gap-4">
                       {report.images.length > 0 && (
-                        <div className="w-full md:w-48 h-48 rounded-lg overflow-hidden flex-shrink-0">
+                        <div className="w-full md:w-48 h-48 rounded-lg overflow-hidden shrink-0">
                           <img
-                            src={getImageUrl(report.images[0])}
+                            src={getImageUrl(report.images[0] || '')}
                             alt={report.title}
                             className="w-full h-full object-cover"
                           />
@@ -282,7 +282,7 @@ export default function LaporanSaya() {
                         </div>
                         <div className="flex flex-wrap gap-2">
                           <RoadIssueTypeBadge type={report.type} />
-                          <DangerLevelBadge level={report.dangerLevel} />
+                          <DangerLevelBadge level={report.dangerLevel as any} />
                         </div>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <MapPin className="h-4 w-4" />
@@ -305,4 +305,3 @@ export default function LaporanSaya() {
     </div>
   );
 }
-

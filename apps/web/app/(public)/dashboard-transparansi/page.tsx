@@ -494,5 +494,3 @@ function getDisasterTypeColor(type: string): string {
   };
   return colors[type] || '#6b7280';
 }
-
-

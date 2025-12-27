@@ -1,13 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
@@ -108,14 +102,17 @@ export default function ChangePasswordPage() {
         confirmPassword: '',
       });
       setErrors({});
-      
+
       // Redirect to profile after 1 second
       setTimeout(() => {
         router.push('/profile');
       }, 1000);
     } catch (error: any) {
       console.error('Error changing password:', error);
-      if (error.message.includes('Invalid current password') || error.message.includes('password salah')) {
+      if (
+        error.message.includes('Invalid current password') ||
+        error.message.includes('password salah')
+      ) {
         setErrors({ currentPassword: 'Password saat ini salah' });
       } else {
         toast.error(error.message || 'Gagal mengubah password');
@@ -147,9 +144,7 @@ export default function ChangePasswordPage() {
             </div>
             <div>
               <CardTitle>Ganti Password</CardTitle>
-              <CardDescription>
-                Pastikan password baru Anda kuat dan mudah diingat
-              </CardDescription>
+              <CardDescription>Pastikan password baru Anda kuat dan mudah diingat</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -286,4 +281,3 @@ export default function ChangePasswordPage() {
     </div>
   );
 }
-

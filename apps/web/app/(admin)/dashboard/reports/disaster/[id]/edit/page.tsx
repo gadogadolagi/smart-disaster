@@ -1,7 +1,7 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { use, useEffect, useState, type FormEvent } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,10 +35,10 @@ interface DisasterReport {
   riskLevel: RiskLevel;
 }
 
-export default function EditDisasterReportPage({ params }: { params: Promise<{ id: string }> }) {
+export default function EditDisasterReportPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const { id } = use(params);
+  const { id } = useParams<{ id: string }>();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);

@@ -6,8 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { API_ENDPOINTS, getImageUrl } from '@/lib/api/config';
 import { AlertTriangle, ArrowLeft, Brain, Clock, MapPin, Shield, TrendingUp } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { use, useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 interface DisasterReport {
@@ -94,7 +94,7 @@ function CommentSection({
 }
 
 export default function DisasterReportDetailPage({ params }: { params: { id: string } }) {
-  const { id } = use(params);
+  const { id } = useParams<{ id: string }>();
 
   const router = useRouter();
   const [report, setReport] = useState<DisasterReport | null>(null);

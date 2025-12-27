@@ -119,4 +119,3 @@ export function ReportTimeline({ events, reportTitle }: ReportTimelineProps) {
     </Card>
   );
 }
-

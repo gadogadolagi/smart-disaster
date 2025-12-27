@@ -1,13 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -137,11 +131,7 @@ export default function ProfilePage() {
                 <CardDescription>Informasi akun Anda yang terlihat oleh publik</CardDescription>
               </div>
               {!isEditing && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsEditing(true)}
-                >
+                <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
                 </Button>
@@ -172,10 +162,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button
-                    onClick={handleUpdateProfile}
-                    disabled={isLoading}
-                  >
+                  <Button onClick={handleUpdateProfile} disabled={isLoading}>
                     Simpan Perubahan
                   </Button>
                   <Button
@@ -276,4 +263,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-

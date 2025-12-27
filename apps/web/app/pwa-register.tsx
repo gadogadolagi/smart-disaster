@@ -14,9 +14,12 @@ export function PWARegister() {
           console.log('Service Worker registered:', registration);
 
           // Check for updates periodically
-          setInterval(() => {
-            registration.update();
-          }, 60 * 60 * 1000); // Check every hour
+          setInterval(
+            () => {
+              registration.update();
+            },
+            60 * 60 * 1000
+          ); // Check every hour
         })
         .catch((error) => {
           console.error('Service Worker registration failed:', error);
@@ -31,5 +34,3 @@ export function PWARegister() {
 
   return null;
 }
-
-

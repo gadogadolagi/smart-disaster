@@ -423,7 +423,7 @@ export default function MonitoringPage() {
                       <div className="flex flex-wrap items-start justify-between gap-4">
                         <div className="flex gap-4 flex-1">
                           {report.images?.[0] && (
-                            <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                            <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted shrink-0">
                               <img
                                 src={`${API_BASE_URL}${report.images[0]}`}
                                 alt=""
@@ -683,7 +683,7 @@ export default function MonitoringPage() {
                       <div className="flex flex-wrap items-start justify-between gap-4">
                         <div className="flex gap-4 flex-1">
                           {report.images?.[0] && (
-                            <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                            <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted shrink-0">
                               <img
                                 src={`${API_BASE_URL}${report.images[0]}`}
                                 alt=""
