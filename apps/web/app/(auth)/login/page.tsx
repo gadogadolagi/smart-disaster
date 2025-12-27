@@ -44,7 +44,7 @@ export default function Login() {
           // Get updated user from context
           const currentUser = user;
           if (currentUser?.role === 'admin') {
-            router.push('/dashboard-admin');
+            router.push('/dashboard');
           } else if (currentUser?.role === 'petugas') {
             router.push('/monitoring');
           } else {
@@ -137,9 +137,9 @@ export default function Login() {
 
           <div className="mt-4 p-3 bg-muted rounded-lg text-sm">
             <p className="font-medium mb-1">Demo Akun:</p>
-            <p className="text-muted-foreground">Warga: warga@demo.com / warga123</p>
-            <p className="text-muted-foreground">Petugas: petugas@demo.com / petugas123</p>
-            <p className="text-muted-foreground">Admin: pemerintah@demo.com / admin123</p>
+            <p className="text-muted-foreground">Warga: user1@example.com / password123</p>
+            <p className="text-muted-foreground">Petugas: petugas1@example.com / password123</p>
+            <p className="text-muted-foreground">Admin: admin@example.com / password123</p>
           </div>
         </CardContent>
 

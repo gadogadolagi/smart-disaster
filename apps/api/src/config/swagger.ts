@@ -143,8 +143,12 @@ Tambahkan header \`Authorization: Bearer <token>\` pada request yang memerlukan 
     ],
   },
   apis: [
-    './src/routes/*.ts',
-    './src/controllers/*.ts',
+    process.env.NODE_ENV === 'production'
+      ? './dist/routes/*.js'
+      : './src/routes/*.ts',
+    process.env.NODE_ENV === 'production'
+      ? './dist/controllers/*.js'
+      : './src/controllers/*.ts',
   ],
 };
 

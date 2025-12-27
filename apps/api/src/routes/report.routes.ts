@@ -380,12 +380,7 @@ router.put('/road/:id', authenticate, authorize('government'), reportController.
  *       404:
  *         description: Report not found
  */
-router.delete(
-  '/road/:id',
-  authenticate,
-  authorize('admin'),
-  reportController.deleteRoadReport
-);
+router.delete('/road/:id', authenticate, authorize('admin'), reportController.deleteRoadReport);
 
 /**
  * @swagger
@@ -423,5 +418,48 @@ router.delete(
  *         description: Unauthorized
  */
 router.get('/my-reports', authenticate, reportController.getUserReports);
+
+/**
+ * @swagger
+ * /api/reports/recent:
+ *   get:
+ *     summary: Get recent reports with images (disaster + road)
+ *     tags: [Reports]
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 6
+ *         description: Number of recent reports to return
+ *     responses:
+ *       200:
+ *         description: List of recent reports with images
+ */
+router.get('/recent', optionalAuthenticate, reportController.getRecentReports);
+
+/**
+ * @swagger
+ * /api/reports/map:
+ *   get:
+ *     summary: Get reports with coordinates for map preview
+ *     tags: [Reports]
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *         description: Filter by type (all, disaster, road, flood, fire, etc.)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Maximum number of reports to return
+ *     responses:
+ *       200:
+ *         description: List of reports with coordinates
+ */
+router.get('/map', optionalAuthenticate, reportController.getReportsForMap);
 
 export default router;

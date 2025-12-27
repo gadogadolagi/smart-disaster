@@ -1,5 +1,6 @@
 // API Configuration
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
+export const AI_SERVICE_URL = process.env.NEXT_PUBLIC_AI_SERVICE_URL || 'http://localhost:8000';
 
 export const API_ENDPOINTS = {
   reports: {
@@ -18,6 +19,8 @@ export const API_ENDPOINTS = {
       delete: (id: string) => `${API_BASE_URL}/api/reports/road/${id}`,
     },
     myReports: `${API_BASE_URL}/api/reports/my-reports`,
+    recent: `${API_BASE_URL}/api/reports/recent`,
+    map: `${API_BASE_URL}/api/reports/map`,
   },
   assignments: {
     petugas: `${API_BASE_URL}/api/assignments/petugas`,
@@ -34,6 +37,24 @@ export const API_ENDPOINTS = {
   activities: {
     getReport: (id: string) => `${API_BASE_URL}/api/activities/report/${id}`,
     create: (id: string) => `${API_BASE_URL}/api/activities/report/${id}`,
+    list: `${API_BASE_URL}/api/activities`,
+    getByUser: (userId: string) => `${API_BASE_URL}/api/activities/user/${userId}`,
+    recent: `${API_BASE_URL}/api/activities/recent`,
+  },
+  stats: {
+    dashboard: `${API_BASE_URL}/api/stats/dashboard`,
+    public: `${API_BASE_URL}/api/stats/public`,
+    disaster: `${API_BASE_URL}/api/stats/disaster`,
+  },
+  ai: {
+    // Use Next.js API route as proxy to avoid CORS issues
+    fireRealtime: (location: string) => `/api/ai/realtime?location=${location}&type=fire`,
+    airQualityRealtime: (location: string) =>
+      `/api/ai/realtime?location=${location}&type=air_quality`,
+    // Direct endpoints (will have CORS issues if not configured in FastAPI)
+    fireRealtimeDirect: (location: string) => `${AI_SERVICE_URL}/predict/realtime/${location}`,
+    airQualityRealtimeDirect: (location: string) =>
+      `${AI_SERVICE_URL}/predict/air_quality/realtime/${location}`,
   },
 };
 

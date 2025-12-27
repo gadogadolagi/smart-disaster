@@ -198,7 +198,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import {
   AlertTriangle,
-  Droplets,
   FileText,
   Home,
   LayoutDashboard,
@@ -215,18 +214,16 @@ import { useMemo, useState } from 'react';
 
 const publicNavItems = [
   { href: '/', label: 'Beranda', icon: Home },
-  { href: '/monitoring', label: 'Monitoring', icon: Droplets },
+  { href: '/dashboard-transparansi', label: 'Transparansi', icon: Shield },
+  { href: '/laporkan-bencana', label: 'Laporkan Bencana', icon: AlertTriangle },
+  { href: '/laporkan-jalan', label: 'Laporkan Jalan', icon: FileText },
   { href: '/public-reports', label: 'Laporan Publik', icon: FileText },
 ];
 
-const citizenNavItems = [
-  { href: '/laporkan-bencana', label: 'Laporkan Bencana', icon: AlertTriangle },
-  { href: '/laporkan-jalan', label: 'Laporkan Jalan', icon: FileText },
-  { href: '/laporan-saya', label: 'Laporan Saya', icon: FileText },
-];
+const citizenNavItems = [{ href: '/laporan-saya', label: 'Laporan Saya', icon: FileText }];
 
 const governmentNavItems = [
-  { href: '/dashboard-admin', label: 'Dashboard Admin', icon: LayoutDashboard },
+  { href: '/dashboard', label: 'Dashboard Admin', icon: LayoutDashboard },
 ];
 
 function isPathActive(pathname: string, href: string) {

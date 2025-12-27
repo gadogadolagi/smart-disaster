@@ -406,6 +406,27 @@ export class ReportController {
       data: result,
     });
   });
+
+  getRecentReports = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const reports = await reportService.getRecentReports(limit);
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: MESSAGES.REPORT_FETCH_SUCCESS,
+      data: reports,
+    });
+  });
+
+  getReportsForMap = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const reports = await reportService.getReportsForMap(req.query);
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: MESSAGES.REPORT_FETCH_SUCCESS,
+      data: reports,
+    });
+  });
 }
 
 export const reportController = new ReportController();

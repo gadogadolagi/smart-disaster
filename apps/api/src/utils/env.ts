@@ -43,6 +43,9 @@ const envSchema = z.object({
   SMTP_FROM: z.string().optional(),
   ADMIN_EMAIL: z.string().optional(),
   APP_URL: z.string().optional(),
+
+  // AI Service configuration (optional)
+  AI_SERVICE_URL: z.string().optional().default('http://localhost:8000'),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -89,4 +92,7 @@ export const envConfig = {
 
   // Email configuration
   emailEnabled: !!(env.SMTP_HOST && env.SMTP_PORT && env.SMTP_USER && env.SMTP_PASSWORD),
+
+  // AI Service configuration
+  aiServiceUrl: env.AI_SERVICE_URL || 'http://localhost:8000',
 };

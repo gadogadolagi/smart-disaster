@@ -1,22 +1,20 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { ReactNode, useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navbar } from './Navbar';
+import { cn } from '@/lib/utils';
 import {
+  Activity,
+  BarChart3,
   LayoutDashboard,
-  Users,
-  FileText,
-  Settings,
   LogOut,
-  UserCircle,
   Shield,
+  UserCircle,
+  Users,
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { usePathname, useRouter } from 'next/navigation';
+import { ReactNode, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 interface AdminLayoutProps {
@@ -24,9 +22,11 @@ interface AdminLayoutProps {
 }
 
 const adminNavItems = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/users', label: 'Manajemen User', icon: Users },
-  { href: '/admin/reports', label: 'Manajemen Laporan', icon: FileText },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard/users', label: 'Manajemen User', icon: Users },
+  // { href: '/dashboard', label: 'Manajemen Laporan', icon: FileText },
+  { href: '/dashboard/stats', label: 'Statistik', icon: BarChart3 },
+  { href: '/dashboard/activities', label: 'Log Aktivitas', icon: Activity },
 ];
 
 export function AdminLayout({ children }: AdminLayoutProps) {
@@ -69,7 +69,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link href="/admin/dashboard" className="flex items-center gap-2">
+            <Link href="/dashboard" className="flex items-center gap-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
                 <Shield className="h-5 w-5 text-primary-foreground" />
               </div>
@@ -122,4 +122,3 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     </div>
   );
 }
-

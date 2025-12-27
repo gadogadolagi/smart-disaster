@@ -234,5 +234,24 @@ router.post(
   activityController.createPetugasActivity
 );
 
+/**
+ * @swagger
+ * /api/activities/recent:
+ *   get:
+ *     summary: Get recent activities across all reports
+ *     tags: [Activities]
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Maximum number of activities to return
+ *     responses:
+ *       200:
+ *         description: List of recent activities
+ */
+router.get('/recent', optionalAuthenticate, activityController.getRecentActivities);
+
 export default router;
 
