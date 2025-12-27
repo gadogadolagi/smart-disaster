@@ -167,6 +167,19 @@ export class ActivityController {
       });
     }
   );
+
+  /**
+   * Get recent activities across all reports
+   */
+  getRecentActivities = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const limit = parseInt(req.query.limit as string) || 10;
+    const activities = await activityService.getRecentActivities(limit);
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: activities,
+    });
+  });
 }
 
 export const activityController = new ActivityController();

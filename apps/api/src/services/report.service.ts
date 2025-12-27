@@ -782,6 +782,207 @@ export class ReportService {
       },
     };
   }
+
+  async getRecentReports(limit: number = 6) {
+    // Get recent disaster reports with images
+    const disasterReports = await prisma.disasterReport.findMany({
+      where: {
+        images: {
+          isEmpty: false,
+        },
+      },
+      take: limit,
+      select: {
+        id: true,
+        type: true,
+        title: true,
+        description: true,
+        address: true,
+        district: true,
+        images: true,
+        status: true,
+        riskLevel: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    // Get recent road reports with images
+    const roadReports = await prisma.roadReport.findMany({
+      where: {
+        images: {
+          isEmpty: false,
+        },
+      },
+      take: limit,
+      select: {
+        id: true,
+        type: true,
+        title: true,
+        description: true,
+        address: true,
+        district: true,
+        images: true,
+        status: true,
+        dangerLevel: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    // Combine and sort by createdAt, then take the most recent ones
+    const allReports = [
+      ...disasterReports.map((r) => ({ ...r, reportType: 'disaster' as const })),
+      ...roadReports.map((r) => ({ ...r, reportType: 'road' as const })),
+    ]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, limit);
+
+    return allReports;
+  }
+
+  /**
+   * Get reports with coordinates for map preview
+   * Includes filter by disaster type
+   */
+  async getReportsForMap(query: any) {
+    const { type, limit = 50 } = query;
+
+    const whereDisaster: Prisma.DisasterReportWhereInput = {};
+    const whereRoad: Prisma.RoadReportWhereInput = {};
+
+    // Filter by type if provided
+    if (type && type !== 'all') {
+      if (type === 'disaster') {
+        // Only get disaster reports
+        const reports = await prisma.disasterReport.findMany({
+          where: whereDisaster,
+          take: parseInt(limit as string),
+          select: {
+            id: true,
+            type: true,
+            title: true,
+            lat: true,
+            lng: true,
+            address: true,
+            district: true,
+            status: true,
+            riskLevel: true,
+            createdAt: true,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        });
+
+        return reports.map((r) => ({ ...r, reportType: 'disaster' as const }));
+      } else if (type === 'road') {
+        // Only get road reports
+        const reports = await prisma.roadReport.findMany({
+          where: whereRoad,
+          take: parseInt(limit as string),
+          select: {
+            id: true,
+            type: true,
+            title: true,
+            lat: true,
+            lng: true,
+            address: true,
+            district: true,
+            status: true,
+            dangerLevel: true,
+            createdAt: true,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        });
+
+        return reports.map((r) => ({ ...r, reportType: 'road' as const }));
+      } else {
+        // Filter by specific disaster type
+        whereDisaster.type = type as any;
+        const reports = await prisma.disasterReport.findMany({
+          where: whereDisaster,
+          take: parseInt(limit as string),
+          select: {
+            id: true,
+            type: true,
+            title: true,
+            lat: true,
+            lng: true,
+            address: true,
+            district: true,
+            status: true,
+            riskLevel: true,
+            createdAt: true,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        });
+
+        return reports.map((r) => ({ ...r, reportType: 'disaster' as const }));
+      }
+    }
+
+    // Get both types if no filter
+    const [disasterReports, roadReports] = await Promise.all([
+      prisma.disasterReport.findMany({
+        where: whereDisaster,
+        take: parseInt(limit as string),
+        select: {
+          id: true,
+          type: true,
+          title: true,
+          lat: true,
+          lng: true,
+          address: true,
+          district: true,
+          status: true,
+          riskLevel: true,
+          createdAt: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      prisma.roadReport.findMany({
+        where: whereRoad,
+        take: parseInt(limit as string),
+        select: {
+          id: true,
+          type: true,
+          title: true,
+          lat: true,
+          lng: true,
+          address: true,
+          district: true,
+          status: true,
+          dangerLevel: true,
+          createdAt: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+    ]);
+
+    const allReports = [
+      ...disasterReports.map((r) => ({ ...r, reportType: 'disaster' as const })),
+      ...roadReports.map((r) => ({ ...r, reportType: 'road' as const })),
+    ]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, parseInt(limit as string));
+
+    return allReports;
+  }
 }
 
 export const reportService = new ReportService();

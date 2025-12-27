@@ -1,5 +1,5 @@
 // API Configuration
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
 export const AI_SERVICE_URL = process.env.NEXT_PUBLIC_AI_SERVICE_URL || 'http://localhost:8000';
 
 export const API_ENDPOINTS = {
@@ -19,6 +19,8 @@ export const API_ENDPOINTS = {
       delete: (id: string) => `${API_BASE_URL}/api/reports/road/${id}`,
     },
     myReports: `${API_BASE_URL}/api/reports/my-reports`,
+    recent: `${API_BASE_URL}/api/reports/recent`,
+    map: `${API_BASE_URL}/api/reports/map`,
   },
   assignments: {
     petugas: `${API_BASE_URL}/api/assignments/petugas`,
@@ -37,6 +39,7 @@ export const API_ENDPOINTS = {
     create: (id: string) => `${API_BASE_URL}/api/activities/report/${id}`,
     list: `${API_BASE_URL}/api/activities`,
     getByUser: (userId: string) => `${API_BASE_URL}/api/activities/user/${userId}`,
+    recent: `${API_BASE_URL}/api/activities/recent`,
   },
   stats: {
     dashboard: `${API_BASE_URL}/api/stats/dashboard`,

@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const AI_SERVICE_URL = process.env.NEXT_PUBLIC_AI_SERVICE_URL || 'http://localhost:8000';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { location?: string } }
-) {
+export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const location = searchParams.get('location') || 'riau';
@@ -69,4 +66,3 @@ export async function OPTIONS() {
     },
   });
 }
-

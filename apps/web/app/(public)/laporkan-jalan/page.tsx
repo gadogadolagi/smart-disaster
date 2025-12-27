@@ -40,6 +40,40 @@ export default function LaporkanJalan() {
     reporterPhone: '',
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+
+  const handleLocationChange = (lat: number, lng: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      lat,
+      lng,
+    }));
+  };
+
+  // Auto-fetch user location on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      setIsGettingLocation(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          handleLocationChange(latitude, longitude);
+          setIsGettingLocation(false);
+          toast.success('Lokasi Anda berhasil dideteksi');
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          setIsGettingLocation(false);
+          // Don't show error toast, just use default location
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
+        }
+      );
+    }
+  }, []); // Only run once on mount
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -52,14 +86,6 @@ export default function LaporkanJalan() {
 
   const removeFile = (index: number) => {
     setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
-  };
-
-  const handleLocationChange = (lat: number, lng: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      lat,
-      lng,
-    }));
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -208,7 +234,9 @@ export default function LaporkanJalan() {
               <div className="space-y-2">
                 <Label>Pilih Lokasi di Peta *</Label>
                 <p className="text-xs text-muted-foreground mb-2">
-                  Klik pada peta untuk memilih lokasi kerusakan atau gunakan tombol "Gunakan Lokasi Saya"
+                  {isGettingLocation
+                    ? 'Mengambil lokasi Anda...'
+                    : 'Lokasi Anda sudah terdeteksi. Klik pada peta untuk mengubah atau gunakan tombol "Gunakan Lokasi Saya"'}
                 </p>
                 <MapPicker
                   lat={formData.lat}

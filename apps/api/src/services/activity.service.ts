@@ -174,6 +174,31 @@ export class ActivityService {
       petugasId
     );
   }
+
+  /**
+   * Get recent activities across all reports
+   */
+  async getRecentActivities(limit: number = 10) {
+    const activities = await prisma.reportActivity.findMany({
+      take: limit,
+      include: {
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+            role: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return activities;
+  }
 }
 
 export const activityService = new ActivityService();
