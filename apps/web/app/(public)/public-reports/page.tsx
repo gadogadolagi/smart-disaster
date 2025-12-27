@@ -2,6 +2,7 @@
 import {
   DangerLevelBadge,
   DisasterTypeBadge,
+  MapEmbed,
   RiskLevelBadge,
   RoadIssueTypeBadge,
   StatusBadge,
@@ -569,6 +570,40 @@ export default function PublicReports() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Map Overview - Show first report as example */}
+        {filteredDisasterReports.length > 0 || filteredRoadReports.length > 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                Peta Lokasi Laporan
+              </CardTitle>
+              <CardDescription>
+                Peta lokasi laporan terbaru
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {filteredDisasterReports.length > 0 && filteredDisasterReports[0] ? (
+                <MapEmbed
+                  lat={filteredDisasterReports[0].location.lat}
+                  lng={filteredDisasterReports[0].location.lng}
+                  address={filteredDisasterReports[0].location.address}
+                  title={filteredDisasterReports[0].title}
+                  height="400px"
+                />
+              ) : filteredRoadReports.length > 0 && filteredRoadReports[0] ? (
+                <MapEmbed
+                  lat={filteredRoadReports[0].location.lat}
+                  lng={filteredRoadReports[0].location.lng}
+                  address={filteredRoadReports[0].location.address}
+                  title={filteredRoadReports[0].title}
+                  height="400px"
+                />
+              ) : null}
+            </CardContent>
+          </Card>
+        ) : null}
 
         {/* Reports Tabs */}
         <Tabs defaultValue="disaster" className="space-y-6">

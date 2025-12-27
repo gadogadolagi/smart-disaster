@@ -6,6 +6,54 @@ import { createPaginationResponse, parsePaginationParams } from '../utils/pagina
 import { aiPredictionService } from './ai-prediction.service';
 import { emailService } from './email.service';
 
+/**
+ * Helper function to convert urgencyPercentage to riskLevel
+ * @param urgencyPercentage 0-100 or null
+ * @param defaultLevel Default level if urgencyPercentage is null
+ * @returns RiskLevel: low, medium, high, critical
+ */
+function urgencyToRiskLevel(
+  urgencyPercentage: number | null,
+  defaultLevel: 'low' | 'medium' | 'high' | 'critical' = 'medium'
+): 'low' | 'medium' | 'high' | 'critical' {
+  if (urgencyPercentage === null || urgencyPercentage === undefined) {
+    return defaultLevel;
+  }
+
+  if (urgencyPercentage >= 76) {
+    return 'critical';
+  } else if (urgencyPercentage >= 51) {
+    return 'high';
+  } else if (urgencyPercentage >= 26) {
+    return 'medium';
+  } else {
+    return 'low';
+  }
+}
+
+/**
+ * Helper function to convert urgencyPercentage to dangerLevel
+ * @param urgencyPercentage 0-100 or null
+ * @param defaultLevel Default level if urgencyPercentage is null
+ * @returns DangerLevel: minor, moderate, severe
+ */
+function urgencyToDangerLevel(
+  urgencyPercentage: number | null,
+  defaultLevel: 'minor' | 'moderate' | 'severe' = 'moderate'
+): 'minor' | 'moderate' | 'severe' {
+  if (urgencyPercentage === null || urgencyPercentage === undefined) {
+    return defaultLevel;
+  }
+
+  if (urgencyPercentage >= 61) {
+    return 'severe';
+  } else if (urgencyPercentage >= 31) {
+    return 'moderate';
+  } else {
+    return 'minor';
+  }
+}
+
 export class ReportService {
   async getDisasterReports(query: any) {
     const { page, limit, skip } = parsePaginationParams(query);
@@ -165,6 +213,19 @@ export class ReportService {
         : `[Rekomendasi AI]: ${aiRecommendedAction}`;
     }
 
+    // Determine riskLevel from urgencyPercentage if not provided
+    // Priority: 1) data.riskLevel (from frontend), 2) calculated from urgencyPercentage, 3) default 'medium'
+    const calculatedRiskLevel = urgencyToRiskLevel(urgencyPercentage, 'medium');
+    const finalRiskLevel = data.riskLevel || calculatedRiskLevel;
+
+    logger.info('Disaster report risk level determination', {
+      type: data.type,
+      providedRiskLevel: data.riskLevel,
+      urgencyPercentage,
+      calculatedRiskLevel,
+      finalRiskLevel,
+    });
+
     const report = await prisma.disasterReport.create({
       data: {
         type: data.type,
@@ -175,7 +236,7 @@ export class ReportService {
         lng: data.lng,
         district: data.district,
         images: imagePaths,
-        riskLevel: data.riskLevel || 'medium',
+        riskLevel: finalRiskLevel,
         urgencyPercentage: urgencyPercentage ?? 0, // Default 0 jika null
         reportedById: data.reportedById || null,
         reporterName: data.reportedById ? null : data.reporterName || null,
@@ -496,6 +557,19 @@ export class ReportService {
       logger.info('Skipping AI prediction for road report (no images provided)');
     }
 
+    // Determine dangerLevel from urgencyPercentage if not provided
+    // Priority: 1) data.dangerLevel (from frontend), 2) calculated from urgencyPercentage, 3) default 'moderate'
+    const calculatedDangerLevel = urgencyToDangerLevel(urgencyPercentage, 'moderate');
+    const finalDangerLevel = data.dangerLevel || calculatedDangerLevel;
+
+    logger.info('Road report danger level determination', {
+      type: data.type,
+      providedDangerLevel: data.dangerLevel,
+      urgencyPercentage,
+      calculatedDangerLevel,
+      finalDangerLevel,
+    });
+
     const report = await prisma.roadReport.create({
       data: {
         type: data.type,
@@ -506,7 +580,7 @@ export class ReportService {
         lng: data.lng,
         district: data.district,
         images: imagePaths,
-        dangerLevel: data.dangerLevel || 'moderate',
+        dangerLevel: finalDangerLevel,
         urgencyPercentage: urgencyPercentage ?? 0, // Default 0 jika null
         reportedById: data.reportedById || null,
         reporterName: data.reportedById ? null : data.reporterName || null,

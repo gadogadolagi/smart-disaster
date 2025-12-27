@@ -3,6 +3,7 @@
 import {
   DangerLevelBadge,
   DisasterTypeBadge,
+  MapEmbed,
   RiskLevelBadge,
   RoadIssueTypeBadge,
   StatusBadge,
@@ -54,6 +55,8 @@ interface AssignedReport {
   description: string;
   address: string;
   district: string;
+  lat: number;
+  lng: number;
   images: string[];
   status: ReportStatus;
   riskLevel?: string;
@@ -463,6 +466,15 @@ export default function MonitoringPage() {
                                 {new Date(report.createdAt).toLocaleDateString('id-ID')}
                               </span>
                             </div>
+                            <div className="mt-4">
+                              <MapEmbed
+                                lat={report.lat || 0}
+                                lng={report.lng || 0}
+                                address={`${report.address}, ${report.district}`}
+                                title={report.title}
+                                height="250px"
+                              />
+                            </div>
                           </div>
                         </div>
 
@@ -722,6 +734,15 @@ export default function MonitoringPage() {
                                 <Calendar className="h-4 w-4" />
                                 {new Date(report.createdAt).toLocaleDateString('id-ID')}
                               </span>
+                            </div>
+                            <div className="mt-4">
+                              <MapEmbed
+                                lat={report.lat || 0}
+                                lng={report.lng || 0}
+                                address={`${report.address}, ${report.district}`}
+                                title={report.title}
+                                height="250px"
+                              />
                             </div>
                           </div>
                         </div>

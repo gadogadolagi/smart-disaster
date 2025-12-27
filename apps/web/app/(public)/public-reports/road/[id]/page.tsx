@@ -1,6 +1,6 @@
 'use client';
 
-import { DangerLevelBadge, RoadIssueTypeBadge, StatusBadge } from '@/components/shared';
+import { DangerLevelBadge, MapEmbed, RoadIssueTypeBadge, StatusBadge } from '@/components/shared';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
@@ -247,6 +247,18 @@ export default function RoadReportDetailPage({ params }: { params: { id: string 
               </div>
             </div>
           )}
+
+          {/* Map Embed */}
+          <div>
+            <p className="font-medium text-muted-foreground mb-3">Lokasi di Peta</p>
+            <MapEmbed
+              lat={report.lat}
+              lng={report.lng}
+              address={`${report.address}, ${report.district}`}
+              title={report.title}
+              height="400px"
+            />
+          </div>
 
           <div className="grid gap-4 text-sm">
             <div>

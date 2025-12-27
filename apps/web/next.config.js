@@ -9,6 +9,18 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
   },
 
+  // Webpack configuration for Leaflet
+  /* webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Fix for Leaflet marker icons in client-side builds
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+      };
+    }
+    return config;
+  }, */
+
   // Headers for PWA
   async headers() {
     return [

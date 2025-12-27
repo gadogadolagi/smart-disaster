@@ -168,6 +168,45 @@ pnpm build
 pnpm start
 ```
 
+#### Production dengan PM2
+
+Proyek ini sudah dilengkapi dengan konfigurasi PM2 untuk menjalankan semua aplikasi secara bersamaan:
+
+```bash
+# Pastikan semua aplikasi sudah di-build
+pnpm build
+
+# Pastikan virtual environment untuk service-ai sudah dibuat
+cd apps/service-ai
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# Jalankan semua aplikasi dengan PM2
+pm2 start ecosystem.config.js
+
+# Lihat status aplikasi
+pm2 status
+
+# Lihat logs
+pm2 logs
+
+# Stop semua aplikasi
+pm2 stop all
+
+# Restart semua aplikasi
+pm2 restart all
+
+# Hapus dari PM2
+pm2 delete all
+```
+
+Aplikasi yang akan dijalankan:
+
+- **web**: Next.js app di port 3000
+- **api**: Backend API di port 3001
+- **service-ai**: AI Service di port 8000
+
 ## 📁 Struktur Proyek
 
 ```

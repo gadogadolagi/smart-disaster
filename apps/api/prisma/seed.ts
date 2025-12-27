@@ -152,7 +152,7 @@ async function main() {
   ];
 
   // ============================================
-  // CREATE DISASTER REPORTS (50 reports)
+  // CREATE DISASTER REPORTS (100 reports)
   // ============================================
   console.log('🌊 Creating disaster reports...');
 
@@ -344,8 +344,8 @@ async function main() {
     'resolved',
   ];
 
-  // Create 50 disaster reports dengan variasi tanggal (30 hari terakhir)
-  for (let i = 0; i < 50; i++) {
+  // Create 100 disaster reports dengan variasi tanggal (30 hari terakhir)
+  for (let i = 0; i < 100; i++) {
     const template = getRandomItem(disasterTemplates);
     const title = getRandomItem(template.titles);
     const description = getRandomItem(template.descriptions);
@@ -416,7 +416,7 @@ async function main() {
   console.log(`✅ Created ${disasterReports.length} disaster reports`);
 
   // ============================================
-  // CREATE ROAD REPORTS (50 reports)
+  // CREATE ROAD REPORTS (100 reports)
   // ============================================
   console.log('🛣️  Creating road reports...');
 
@@ -511,8 +511,8 @@ async function main() {
 
   const roadReports = [];
 
-  // Create 50 road reports dengan variasi tanggal (30 hari terakhir)
-  for (let i = 0; i < 50; i++) {
+  // Create 100 road reports dengan variasi tanggal (30 hari terakhir)
+  for (let i = 0; i < 100; i++) {
     const template = getRandomItem(roadTemplates);
     const title = getRandomItem(template.titles);
     const description = getRandomItem(template.descriptions);
@@ -613,8 +613,8 @@ async function main() {
 
   let commentCount = 0;
 
-  // Add comments to random reports (lebih banyak comments untuk 100 reports)
-  for (let i = 0; i < 80; i++) {
+  // Add comments to random reports (lebih banyak comments untuk 200 reports)
+  for (let i = 0; i < 150; i++) {
     const isDisaster = Math.random() > 0.5;
     const reports = isDisaster ? disasterReports : roadReports;
     const report = getRandomItem(reports);

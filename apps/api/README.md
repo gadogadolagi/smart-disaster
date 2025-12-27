@@ -22,9 +22,32 @@ pnpm install
 cp .env.example .env
 ```
 
-Edit `.env` dan isi `DATABASE_URL` dengan koneksi database PostgreSQL Anda:
+Edit `.env` dan isi variabel yang diperlukan:
+
+**Required Variables:**
 ```
 DATABASE_URL="postgresql://user:password@localhost:5432/uhtp_smart_disaster?schema=public"
+JWT_SECRET="your-secret-key-minimum-32-characters-long"
+NODE_ENV="development"
+PORT="3001"
+```
+
+**CORS Configuration (Important for Production):**
+```
+# Opsi 1: Set specific domains (RECOMMENDED untuk production)
+# Pisahkan multiple origins dengan koma
+ALLOWED_ORIGINS="http://localhost:3000,https://yourdomain.com,https://www.yourdomain.com"
+
+# Opsi 2: Allow all origins menggunakan wildcard
+ALLOWED_ORIGINS="*"
+
+# Opsi 3: Biarkan kosong (akan allow all dengan warning)
+# TIDAK disarankan untuk production!
+```
+
+**AI Service Configuration:**
+```
+AI_SERVICE_URL="http://localhost:8000"
 ```
 
 3. Setup database dengan Prisma:

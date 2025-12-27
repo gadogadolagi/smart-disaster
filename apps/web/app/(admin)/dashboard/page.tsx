@@ -3,6 +3,7 @@
 import {
   DangerLevelBadge,
   DisasterTypeBadge,
+  MapEmbed,
   RiskLevelBadge,
   RoadIssueTypeBadge,
   StatsCard,
@@ -588,6 +589,15 @@ export default function DashboardAdmin() {
                                   {new Date(report.createdAt).toLocaleDateString('id-ID')}
                                 </span>
                               </div>
+                              <div className="mt-4">
+                                <MapEmbed
+                                  lat={report.lat}
+                                  lng={report.lng}
+                                  address={`${report.address}, ${report.district}`}
+                                  title={report.title}
+                                  height="250px"
+                                />
+                              </div>
                             </div>
                           </div>
 
@@ -851,6 +861,15 @@ export default function DashboardAdmin() {
                                 <Calendar className="h-4 w-4" />
                                 {new Date(report.createdAt).toLocaleDateString('id-ID')}
                               </span>
+                            </div>
+                            <div className="mt-4">
+                              <MapEmbed
+                                lat={report.lat}
+                                lng={report.lng}
+                                address={`${report.address}, ${report.district}`}
+                                title={report.title}
+                                height="250px"
+                              />
                             </div>
                           </div>
                         </div>

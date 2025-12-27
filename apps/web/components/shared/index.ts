@@ -1,3 +1,5 @@
+export { MapEmbed } from './MapEmbed';
+export { MapPicker } from './MapPicker';
 export { StatsCard } from './StatsCard';
 export {
   DangerLevelBadge,

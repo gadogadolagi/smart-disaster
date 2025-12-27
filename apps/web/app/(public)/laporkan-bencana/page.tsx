@@ -16,23 +16,16 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 
+import { MapPicker } from '@/components/shared';
 import { useAuth } from '@/contexts/AuthContext';
 import { API_ENDPOINTS } from '@/lib/api/config';
 import type { DisasterType } from '@/types';
-import { AlertTriangle, MapPin, Navigation, Upload, X } from 'lucide-react';
-import { useGeolocated } from 'react-geolocated';
+import { AlertTriangle, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function LaporkanBencana() {
   const { user } = useAuth();
   const router = useRouter();
-
-  const { coords, isGeolocationAvailable, isGeolocationEnabled, positionError } = useGeolocated({
-    positionOptions: {
-      enableHighAccuracy: true,
-    },
-    userDecisionTimeout: 5000,
-  });
 
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -41,25 +34,12 @@ export default function LaporkanBencana() {
     description: '',
     address: '',
     district: '',
-    lat: '-6.2088',
-    lng: '106.8226',
+    lat: -6.2088,
+    lng: 106.8226,
     reporterName: '',
     reporterPhone: '',
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [locationUsed, setLocationUsed] = useState(false);
-
-  // Auto-fill location when coords become available
-  useEffect(() => {
-    if (coords && !locationUsed) {
-      setFormData((prev) => ({
-        ...prev,
-        lat: coords.latitude.toString(),
-        lng: coords.longitude.toString(),
-      }));
-      setLocationUsed(true);
-    }
-  }, [coords, locationUsed]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -74,16 +54,12 @@ export default function LaporkanBencana() {
     setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
   };
 
-  const handleUseLocation = () => {
-    if (coords) {
-      setFormData((prev) => ({
-        ...prev,
-        lat: coords.latitude.toString(),
-        lng: coords.longitude.toString(),
-      }));
-      setLocationUsed(true);
-      toast.success('Lokasi berhasil digunakan');
-    }
+  const handleLocationChange = (lat: number, lng: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      lat,
+      lng,
+    }));
   };
 
   // const handleSubmit = async (e: FormEvent) => {
@@ -171,8 +147,8 @@ export default function LaporkanBencana() {
       formDataToSend.append('description', formData.description);
       formDataToSend.append('address', formData.address);
       formDataToSend.append('district', formData.district);
-      formDataToSend.append('lat', formData.lat);
-      formDataToSend.append('lng', formData.lng);
+      formDataToSend.append('lat', formData.lat.toString());
+      formDataToSend.append('lng', formData.lng.toString());
 
       if (user?.id) {
         formDataToSend.append('reportedById', user.id);
@@ -293,77 +269,16 @@ export default function LaporkanBencana() {
               </div>
 
               <div className="space-y-2">
-                <Label>Koordinat Lokasi</Label>
-                <div className="flex gap-2">
-                  <div className="flex-1 grid grid-cols-2 gap-2">
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Latitude</Label>
-                      <Input
-                        value={formData.lat}
-                        onChange={(e) => setFormData({ ...formData, lat: e.target.value })}
-                        placeholder="-6.2088"
-                        type="number"
-                        step="any"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Longitude</Label>
-                      <Input
-                        value={formData.lng}
-                        onChange={(e) => setFormData({ ...formData, lng: e.target.value })}
-                        placeholder="106.8226"
-                        type="number"
-                        step="any"
-                      />
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleUseLocation}
-                    disabled={!isGeolocationAvailable || !isGeolocationEnabled || !coords}
-                    className="mt-6"
-                  >
-                    {coords ? (
-                      <>
-                        <MapPin className="h-4 w-4 mr-2" />
-                        {locationUsed ? 'Perbarui Lokasi' : 'Gunakan Lokasi'}
-                      </>
-                    ) : (
-                      <>
-                        <Navigation className="h-4 w-4 mr-2 animate-spin" />
-                        Mendapatkan...
-                      </>
-                    )}
-                  </Button>
-                </div>
-                {coords && locationUsed && (
-                  <p className="text-xs text-success flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
-                    Lokasi digunakan: {coords.latitude.toFixed(6)}, {coords.longitude.toFixed(6)}
-                  </p>
-                )}
-                {coords && !locationUsed && (
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
-                    Lokasi tersedia, klik tombol untuk menggunakan
-                  </p>
-                )}
-                {!isGeolocationAvailable && (
-                  <p className="text-xs text-destructive">
-                    Geolocation tidak didukung oleh browser Anda
-                  </p>
-                )}
-                {isGeolocationAvailable && !isGeolocationEnabled && (
-                  <p className="text-xs text-destructive">
-                    Akses lokasi ditolak. Silakan izinkan akses lokasi di pengaturan browser.
-                  </p>
-                )}
-                {positionError && (
-                  <p className="text-xs text-destructive">
-                    {positionError.message || 'Gagal mendapatkan lokasi'}
-                  </p>
-                )}
+                <Label>Pilih Lokasi di Peta *</Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Klik pada peta untuk memilih lokasi kejadian atau gunakan tombol "Gunakan Lokasi Saya"
+                </p>
+                <MapPicker
+                  lat={formData.lat}
+                  lng={formData.lng}
+                  onLocationChange={handleLocationChange}
+                  height="400px"
+                />
               </div>
 
               {!user && (

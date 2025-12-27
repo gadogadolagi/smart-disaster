@@ -17,3 +17,5 @@ source venv/bin/activate
 # Jalankan aplikasi
 exec python main.py
 
+
+

@@ -131,3 +131,5 @@ async function syncReports() {
   // Implementation depends on your offline queue system
   console.log('Syncing reports...');
 }
+
+
