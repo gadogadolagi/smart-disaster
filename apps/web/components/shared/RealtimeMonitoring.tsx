@@ -194,7 +194,8 @@ export function RealtimeMonitoring() {
           </Badge>
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Status Monitoring Provinsi Riau</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Data prediksi real-time dari sensor IoT untuk kebakaran dan kualitas udara
+            Data prediksi real-time menggunakan informasi dari sistem IoT terintegrasi untuk
+            monitoring kebakaran dan kualitas udara
           </p>
           <div className="flex items-center justify-center gap-2 mt-4 text-sm text-muted-foreground">
             <button

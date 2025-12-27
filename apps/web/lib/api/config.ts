@@ -41,6 +41,12 @@ export const API_ENDPOINTS = {
     getByUser: (userId: string) => `${API_BASE_URL}/api/activities/user/${userId}`,
     recent: `${API_BASE_URL}/api/activities/recent`,
   },
+  comments: {
+    create: `${API_BASE_URL}/api/comments`,
+    getReport: (id: string) => `${API_BASE_URL}/api/comments/report/${id}`,
+    update: (id: string) => `${API_BASE_URL}/api/comments/${id}`,
+    delete: (id: string) => `${API_BASE_URL}/api/comments/${id}`,
+  },
   stats: {
     dashboard: `${API_BASE_URL}/api/stats/dashboard`,
     public: `${API_BASE_URL}/api/stats/public`,

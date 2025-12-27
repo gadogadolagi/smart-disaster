@@ -39,7 +39,8 @@ const features = [
   {
     icon: Flame,
     title: 'Prediksi Kebakaran',
-    description: 'Monitoring real-time sensor IoT untuk deteksi dini kebakaran hutan dan lahan',
+    description:
+      'Monitoring real-time menggunakan data dari sistem IoT terintegrasi untuk deteksi dini kebakaran hutan dan lahan',
     href: '/fire-prediction',
     color: 'text-red-600',
     bgColor: 'bg-red-50',
@@ -235,7 +236,7 @@ export default function Home() {
 
               <p className="text-lg md:text-xl text-muted-foreground max-w-lg">
                 Sistem terpadu untuk monitoring bencana, pelaporan cepat, dan koordinasi penanganan
-                darurat berbasis teknologi IoT dan AI.
+                darurat yang memanfaatkan data dari sistem IoT terintegrasi dan teknologi AI.
               </p>
 
               <div className="flex flex-wrap gap-4">
@@ -285,16 +286,16 @@ export default function Home() {
                   <div className="flex items-center gap-3 mb-2">
                     <div className="p-2 rounded-lg bg-green-100">
                       <CheckCircle className="w-5 h-5 text-green-600" />
-                  </div>
+                    </div>
                   </div>
                   <p className="text-3xl font-bold text-foreground">24/7</p>
                   <p className="text-sm text-muted-foreground">Monitoring</p>
                 </div>
                 <div className="p-4 rounded-xl bg-card border border-border shadow-sm">
                   <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <TrendingUp className="w-5 h-5 text-primary" />
-                  </div>
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <TrendingUp className="w-5 h-5 text-primary" />
+                    </div>
                   </div>
                   <p className="text-3xl font-bold text-foreground">Real-time</p>
                   <p className="text-sm text-muted-foreground">Update</p>
@@ -303,7 +304,7 @@ export default function Home() {
                   <div className="flex items-center gap-3 mb-2">
                     <div className="p-2 rounded-lg bg-orange-100">
                       <Clock className="w-5 h-5 text-orange-600" />
-                  </div>
+                    </div>
                   </div>
                   <p className="text-3xl font-bold text-foreground">&lt;1m</p>
                   <p className="text-sm text-muted-foreground">Response</p>
@@ -411,7 +412,9 @@ export default function Home() {
       <section className="py-12 md:py-20 bg-background">
         <div className="container">
           <div className="mb-6 md:mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold mb-2 text-foreground">Peta Lokasi Laporan</h2>
+            <h2 className="text-2xl md:text-3xl font-bold mb-2 text-foreground">
+              Peta Lokasi Laporan
+            </h2>
             <p className="text-sm md:text-base text-muted-foreground">
               Lihat lokasi laporan bencana dan jalan rusak di peta interaktif
             </p>
@@ -430,7 +433,9 @@ export default function Home() {
             <Card className="border-border">
               <CardContent className="p-8 md:p-12 text-center">
                 <MapPin className="w-12 h-12 md:w-16 md:h-16 text-muted-foreground mx-auto mb-4" />
-                <p className="text-sm md:text-base text-muted-foreground">Belum ada laporan untuk ditampilkan di peta</p>
+                <p className="text-sm md:text-base text-muted-foreground">
+                  Belum ada laporan untuk ditampilkan di peta
+                </p>
               </CardContent>
             </Card>
           )}
@@ -535,8 +540,12 @@ export default function Home() {
       <section className="py-12 md:py-20 bg-background">
         <div className="container">
           <div className="mb-6 md:mb-8 px-4 md:px-0">
-            <h2 className="text-2xl md:text-3xl font-bold mb-2 text-foreground">Timeline Aktivitas Terbaru</h2>
-            <p className="text-sm md:text-base text-muted-foreground">Update penanganan laporan terkini</p>
+            <h2 className="text-2xl md:text-3xl font-bold mb-2 text-foreground">
+              Timeline Aktivitas Terbaru
+            </h2>
+            <p className="text-sm md:text-base text-muted-foreground">
+              Update penanganan laporan terkini
+            </p>
           </div>
 
           {isLoadingActivities ? (
@@ -595,7 +604,9 @@ export default function Home() {
             <Card className="border-border mx-4 md:mx-0">
               <CardContent className="p-8 md:p-12 text-center">
                 <Activity className="w-12 h-12 md:w-16 md:h-16 text-muted-foreground mx-auto mb-4" />
-                <p className="text-sm md:text-base text-muted-foreground">Belum ada aktivitas terbaru</p>
+                <p className="text-sm md:text-base text-muted-foreground">
+                  Belum ada aktivitas terbaru
+                </p>
               </CardContent>
             </Card>
           )}
@@ -641,8 +652,8 @@ export default function Home() {
               ))}
             </div>
           ) : recentReports.length > 0 ? (
-          <div className="grid md:grid-cols-3 gap-6">
-            {recentReports.map((report) => (
+            <div className="grid md:grid-cols-3 gap-6">
+              {recentReports.map((report) => (
                 <Link
                   key={report.id}
                   href={
@@ -656,39 +667,39 @@ export default function Home() {
                       <div className="h-48 bg-muted relative overflow-hidden group">
                         <img
                           src={getImageUrl(report.images[0])}
-                      alt={report.title}
+                          alt={report.title}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
+                        />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                    <div className="absolute top-3 right-3">
-                      <Badge
-                        variant={
-                          report.status === 'resolved'
-                            ? 'default'
-                            : report.status === 'in_progress'
-                              ? 'secondary'
-                              : 'outline'
-                        }
+                        <div className="absolute top-3 right-3">
+                          <Badge
+                            variant={
+                              report.status === 'resolved'
+                                ? 'default'
+                                : report.status === 'in_progress'
+                                  ? 'secondary'
+                                  : 'outline'
+                            }
                             className="backdrop-blur-sm"
-                      >
-                        {report.status === 'resolved'
-                          ? 'Selesai'
-                          : report.status === 'in_progress'
-                            ? 'Ditangani'
+                          >
+                            {report.status === 'resolved'
+                              ? 'Selesai'
+                              : report.status === 'in_progress'
+                                ? 'Ditangani'
                                 : report.status === 'verified'
                                   ? 'Terverifikasi'
-                            : 'Menunggu'}
-                      </Badge>
-                    </div>
+                                  : 'Menunggu'}
+                          </Badge>
+                        </div>
                         <div className="absolute bottom-3 left-3 right-3">
                           <Badge variant="outline" className="text-xs bg-white/90 backdrop-blur-sm">
                             {report.reportType === 'disaster'
                               ? report.type === 'flood'
-                        ? 'Banjir'
-                        : report.type === 'fire'
-                          ? 'Kebakaran'
-                          : report.type === 'landslide'
-                            ? 'Longsor'
+                                ? 'Banjir'
+                                : report.type === 'fire'
+                                  ? 'Kebakaran'
+                                  : report.type === 'landslide'
+                                    ? 'Longsor'
                                     : report.type === 'earthquake'
                                       ? 'Gempa'
                                       : report.type === 'fallen_tree'
@@ -704,9 +715,9 @@ export default function Home() {
                                       ? 'Banjir'
                                       : report.type === 'bridge_damage'
                                         ? 'Jembatan Rusak'
-                            : 'Lainnya'}
-                    </Badge>
-                  </div>
+                                        : 'Lainnya'}
+                          </Badge>
+                        </div>
                       </div>
                     ) : (
                       <div className="h-48 bg-muted flex items-center justify-center">
@@ -719,15 +730,15 @@ export default function Home() {
                         {report.title}
                       </h3>
                       <p className="text-sm text-muted-foreground line-clamp-2 mb-4 min-h-10">
-                    {report.description}
-                  </p>
+                        {report.description}
+                      </p>
 
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <MapPin className="w-4 h-4 shrink-0" />
                         <span className="line-clamp-1">{report.address}</span>
-                  </div>
-                </CardContent>
-              </Card>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </Link>
               ))}
             </div>
@@ -747,7 +758,9 @@ export default function Home() {
             <Badge variant="outline" className="mb-4">
               FAQ
             </Badge>
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 text-foreground">Pertanyaan Umum</h2>
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 text-foreground">
+              Pertanyaan Umum
+            </h2>
             <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto">
               Temukan jawaban untuk pertanyaan umum tentang sistem pelaporan bencana
             </p>

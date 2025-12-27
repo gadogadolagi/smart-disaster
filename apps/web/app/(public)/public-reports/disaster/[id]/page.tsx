@@ -3,9 +3,10 @@
 import { DisasterTypeBadge, MapEmbed, RiskLevelBadge, StatusBadge } from '@/components/shared';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
-import { API_ENDPOINTS, getImageUrl } from '@/lib/api/config';
-import { AlertTriangle, ArrowLeft, Brain, Clock, MapPin, Shield, TrendingUp } from 'lucide-react';
+import { API_ENDPOINTS, apiCall, getImageUrl } from '@/lib/api/config';
+import { AlertTriangle, ArrowLeft, Brain, Clock, MapPin, Shield, TrendingUp, User } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -39,6 +40,19 @@ interface DisasterReport {
   };
 }
 
+interface Comment {
+  id: string;
+  content: string;
+  createdAt: string;
+  author: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    avatar?: string;
+  };
+}
+
 function CommentSection({
   reportId,
   reportType,
@@ -47,46 +61,139 @@ function CommentSection({
   reportType: 'disaster' | 'road';
 }) {
   const { user, isAuthenticated } = useAuth();
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Load comments would go here
-  // For now, just show the UI
+  useEffect(() => {
+    loadComments();
+  }, [reportId, reportType]);
+
+  const loadComments = async () => {
+    try {
+      setIsLoading(true);
+      const res = await fetch(
+        `${API_ENDPOINTS.comments.getReport(reportId)}?reportType=${reportType}`
+      );
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setComments(data.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading comments:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmitComment = async () => {
+    if (!newComment.trim()) {
+      toast.error('Komentar tidak boleh kosong');
+      return;
+    }
+
+    if (!isAuthenticated || !user) {
+      toast.error('Silakan login untuk memberikan komentar');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const res = await apiCall(API_ENDPOINTS.comments.create, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reportId,
+          reportType,
+          content: newComment.trim(),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        toast.success('Komentar berhasil ditambahkan');
+        setNewComment('');
+        loadComments();
+      } else {
+        throw new Error(data.message || 'Gagal menambahkan komentar');
+      }
+    } catch (error: any) {
+      console.error('Error submitting comment:', error);
+      toast.error(error.message || 'Gagal menambahkan komentar');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <Card className="mt-6">
       <CardHeader>
-        <CardTitle>Komentar</CardTitle>
+        <CardTitle>Komentar ({comments.length})</CardTitle>
       </CardHeader>
       <CardContent>
-        {comments.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Belum ada komentar</p>
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground text-center py-4">Memuat komentar...</p>
+        ) : comments.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            Belum ada komentar. Jadilah yang pertama!
+          </p>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 mb-4">
             {comments.map((comment) => (
-              <div key={comment.id} className="border-b pb-4">
-                <p className="font-medium">{comment.author}</p>
-                <p className="text-sm text-muted-foreground">{comment.content}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {new Date(comment.createdAt).toLocaleString('id-ID')}
-                </p>
+              <div key={comment.id} className="p-3 rounded-lg bg-muted/50 border border-border">
+                <div className="flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    {comment.author.role === 'admin' ? (
+                      <Shield className="h-4 w-4 text-primary" />
+                    ) : (
+                      <User className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-sm font-medium">{comment.author.name}</p>
+                      {comment.author.role === 'admin' && (
+                        <span className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary">
+                          Pemerintah
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-foreground whitespace-pre-wrap">{comment.content}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {new Date(comment.createdAt).toLocaleString('id-ID')}
+                    </p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
         )}
-        {isAuthenticated && (
-          <div className="mt-4">
-            <textarea
+        {isAuthenticated ? (
+          <div className="mt-4 pt-4 border-t">
+            <Textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Tulis komentar..."
-              className="w-full p-2 border rounded-lg"
+              placeholder="Tulis komentar Anda..."
               rows={3}
+              className="mb-2"
             />
-            <Button className="mt-2" size="sm">
-              Kirim Komentar
+            <Button
+              onClick={handleSubmitComment}
+              size="sm"
+              disabled={!newComment.trim() || isSubmitting}
+            >
+              {isSubmitting ? 'Mengirim...' : 'Kirim Komentar'}
             </Button>
           </div>
+        ) : (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            Silakan login untuk memberikan komentar
+          </p>
         )}
       </CardContent>
     </Card>
