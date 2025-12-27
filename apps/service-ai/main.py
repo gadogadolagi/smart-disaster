@@ -21,7 +21,8 @@ LOCATION_SHEET_DB = {
 }
 
 LOCATION_SHEET_DB_AIR_QUALITY = {
-    "riau": "https://docs.google.com/spreadsheets/d/1Zoum_BO7G75SDL1J2XhorIVnIiVPBmaSLRMzcktIol0/export?format=csv&gid=1745426099",
+    # "riau": "https://docs.google.com/spreadsheets/d/1Zoum_BO7G75SDL1J2XhorIVnIiVPBmaSLRMzcktIol0/export?format=csv&gid=1745426099",
+    "riau": "https://docs.google.com/spreadsheets/d/1Zoum_BO7G75SDL1J2XhorIVnIiVPBmaSLRMzcktIol0/export?format=csv&gid=1765426099"
 }
 
 # REKOMENDASI KUALITAS UDARA
