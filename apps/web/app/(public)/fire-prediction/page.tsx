@@ -11,7 +11,8 @@ export default function FirePrediction() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Prediksi Kebakaran</h1>
           <p className="text-muted-foreground">
-            Monitoring real-time dengan model hybrid machine learning terintegrasi IoT
+            Monitoring real-time menggunakan model hybrid machine learning dengan data dari sistem
+            IoT terintegrasi
           </p>
         </div>
 
@@ -43,7 +44,7 @@ export default function FirePrediction() {
         </div>
 
         {/* IoT Sensors Grid */}
-        <h2 className="text-xl font-semibold mb-4">Status Sensor IoT</h2>
+        <h2 className="text-xl font-semibold mb-4">Status Sensor Sistem Terintegrasi</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
           {mockSensors.map((sensor) => (
             <Card key={sensor.id} className={sensor.status === 'warning' ? 'border-warning' : ''}>
