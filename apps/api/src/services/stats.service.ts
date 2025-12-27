@@ -217,6 +217,36 @@ export class StatsService {
       reportsTrend,
     };
   }
+
+  /**
+   * Get public transparency statistics (simplified version for public access)
+   */
+  async getPublicStats() {
+    // Reuse the same logic but return public-safe data
+    const dashboardStats = await this.getDashboardStats();
+
+    // Return public-safe statistics (exclude sensitive info like rejected reports count)
+    return {
+      totalReports: dashboardStats.totalReports,
+      totalDisasterReports: dashboardStats.totalDisasterReports,
+      totalRoadReports: dashboardStats.totalRoadReports,
+      pendingReports: dashboardStats.pendingReports,
+      inProgressReports: dashboardStats.inProgressReports,
+      resolvedReports: dashboardStats.resolvedReports,
+      disasterByType: dashboardStats.disasterByType,
+      reportsByDistrict: dashboardStats.reportsByDistrict,
+      reportsByStatus: {
+        pending: dashboardStats.pendingReports,
+        in_progress: dashboardStats.inProgressReports,
+        resolved: dashboardStats.resolvedReports,
+        verified: dashboardStats.verifiedReports,
+      },
+      recentReports: dashboardStats.recentReports,
+      averageResolutionTime: dashboardStats.averageResolutionTime,
+      resolutionRate: dashboardStats.resolutionRate,
+      reportsTrend: dashboardStats.reportsTrend,
+    };
+  }
 }
 
 export const statsService = new StatsService();

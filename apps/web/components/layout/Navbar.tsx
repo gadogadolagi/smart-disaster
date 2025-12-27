@@ -215,6 +215,7 @@ import { useMemo, useState } from 'react';
 
 const publicNavItems = [
   { href: '/', label: 'Beranda', icon: Home },
+  { href: '/dashboard-transparansi', label: 'Dashboard Transparansi', icon: Shield },
   { href: '/monitoring', label: 'Monitoring', icon: Droplets },
   { href: '/public-reports', label: 'Laporan Publik', icon: FileText },
 ];

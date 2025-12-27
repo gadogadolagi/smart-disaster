@@ -39,6 +39,7 @@ export const API_ENDPOINTS = {
   },
   stats: {
     dashboard: `${API_BASE_URL}/api/stats/dashboard`,
+    public: `${API_BASE_URL}/api/stats/public`,
     disaster: `${API_BASE_URL}/api/stats/disaster`,
   },
 };

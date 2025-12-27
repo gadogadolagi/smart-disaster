@@ -58,6 +58,17 @@ const translations: Record<string, Record<MessageKey, string>> = {
     BAD_REQUEST: 'Request tidak valid',
     UNAUTHORIZED: 'Tidak memiliki akses',
     FORBIDDEN: 'Akses ditolak',
+    TOO_MANY_REQUESTS: 'Terlalu banyak request. Silakan coba lagi nanti',
+
+    // User management messages
+    USER_CREATE_SUCCESS: 'User berhasil dibuat',
+    USER_UPDATE_SUCCESS: 'User berhasil diperbarui',
+    USER_DELETE_SUCCESS: 'User berhasil dihapus',
+    USER_NOT_FOUND: 'User tidak ditemukan',
+    USER_FETCH_SUCCESS: 'Data user berhasil diambil',
+    PASSWORD_CHANGE_SUCCESS: 'Password berhasil diubah',
+    PASSWORD_INCORRECT: 'Password salah',
+    PROFILE_UPDATE_SUCCESS: 'Profil berhasil diperbarui',
   },
   en: {
     // English translations can be added here
@@ -104,6 +115,15 @@ const translations: Record<string, Record<MessageKey, string>> = {
     BAD_REQUEST: 'Bad request',
     UNAUTHORIZED: 'Unauthorized',
     FORBIDDEN: 'Forbidden',
+    TOO_MANY_REQUESTS: 'Too many requests. Please try again later',
+    USER_CREATE_SUCCESS: 'User created successfully',
+    USER_UPDATE_SUCCESS: 'User updated successfully',
+    USER_DELETE_SUCCESS: 'User deleted successfully',
+    USER_NOT_FOUND: 'User not found',
+    USER_FETCH_SUCCESS: 'Users fetched successfully',
+    PASSWORD_CHANGE_SUCCESS: 'Password changed successfully',
+    PASSWORD_INCORRECT: 'Incorrect password',
+    PROFILE_UPDATE_SUCCESS: 'Profile updated successfully',
   },
 };
 
