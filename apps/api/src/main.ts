@@ -13,14 +13,14 @@ import { errorHandler, notFoundHandler } from './utils/errorHandler';
 import { logger } from './utils/logger';
 
 // Import routes
+import activityRoutes from './routes/activity.routes';
+import assignmentRoutes from './routes/assignment.routes';
 import authRoutes from './routes/auth.routes';
+import commentRoutes from './routes/comment.routes';
 import healthRoutes from './routes/health.routes';
 import reportRoutes from './routes/report.routes';
-import userRoutes from './routes/user.routes';
-import assignmentRoutes from './routes/assignment.routes';
-import activityRoutes from './routes/activity.routes';
-import commentRoutes from './routes/comment.routes';
 import statsRoutes from './routes/stats.routes';
+import userRoutes from './routes/user.routes';
 
 // Import swagger setup
 import { setupSwagger } from './config/swagger';
@@ -65,10 +65,29 @@ const corsOptions: cors.CorsOptions = {
       return;
     }
 
-    // In production, check against allowed origins
-    if (envConfig.allowedOrigins.length === 0 || envConfig.allowedOrigins.includes(origin)) {
+    // In production
+    if (envConfig.allowedOrigins.length === 0) {
+      // If ALLOWED_ORIGINS is not set, allow all origins (with security warning)
+      logger.warn(
+        'CORS: ALLOWED_ORIGINS is not configured. Allowing all origins. This is not recommended for production!'
+      );
+      callback(null, true);
+      return;
+    }
+
+    // Check if '*' is set to allow all origins
+    if (envConfig.allowedOrigins.includes('*')) {
+      callback(null, true);
+      return;
+    }
+
+    // Check if origin is in allowed list
+    if (envConfig.allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      logger.warn(`CORS: Origin not allowed: ${origin}`, {
+        allowedOrigins: envConfig.allowedOrigins,
+      });
       callback(new Error('Not allowed by CORS'));
     }
   },
